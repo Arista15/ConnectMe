@@ -1,0 +1,27 @@
+{
+  "name": "kbs-comptable",
+  "version": "2.0.0",
+  "private": true,
+  "description": "KBS Comptable — comptabilité SYSCOHADA multi-sites USD/CDF (Kafaus Business Service SARL)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.57.0",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.6.0"
+  }
+}
