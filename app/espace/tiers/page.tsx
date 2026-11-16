@@ -5,6 +5,7 @@ import { PageHeader, Panel, Empty, Seg } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveSite, getAccounts } from "@/lib/session";
 import { saveCustomer, saveSupplier } from "../actions";
+import { deleteCustomer, deleteSupplier } from "../parite-actions";
 
 export const metadata = { title: "Clients & fournisseurs" };
 
@@ -49,7 +50,8 @@ export default async function ThirdPartiesPage({ searchParams }: { searchParams:
                 {((customers ?? []) as Customer[]).map((c) => (
                   <tr key={c.id}>
                     <td className="fw-500">{c.name}</td><td>{c.phone}</td><td>{c.email}</td><td className="mono">{c.tax_id}</td><td>{c.address}</td>
-                    <td><div className="row-actions"><Modal label="" title={`Modifier — ${c.name}`} icon="pencil" variant="plain sm icon" triggerTitle="Modifier"><CustomerForm c={c} /></Modal></div></td>
+                    <td><div className="row-actions"><Modal label="" title={`Modifier — ${c.name}`} icon="pencil" variant="plain sm icon" triggerTitle="Modifier"><CustomerForm c={c} /></Modal>
+                      <DeleteDialog kind="client" name={c.name} id={c.id} action={deleteCustomer} /></div></td>
                   </tr>
                 ))}
               </tbody>
@@ -63,7 +65,8 @@ export default async function ThirdPartiesPage({ searchParams }: { searchParams:
                 {((suppliers ?? []) as Supplier[]).map((s) => (
                   <tr key={s.id}>
                     <td className="fw-500">{s.name}</td><td>{s.phone}</td><td>{s.email}</td><td className="mono">{s.tax_id}</td><td className="mono">{s.default_account}</td>
-                    <td><div className="row-actions"><Modal label="" title={`Modifier — ${s.name}`} icon="pencil" variant="plain sm icon" triggerTitle="Modifier"><SupplierForm s={s} accounts={accounts} sector={site.sector} /></Modal></div></td>
+                    <td><div className="row-actions"><Modal label="" title={`Modifier — ${s.name}`} icon="pencil" variant="plain sm icon" triggerTitle="Modifier"><SupplierForm s={s} accounts={accounts} sector={site.sector} /></Modal>
+                      <DeleteDialog kind="fournisseur" name={s.name} id={s.id} action={deleteSupplier} /></div></td>
                   </tr>
                 ))}
               </tbody>
@@ -109,5 +112,25 @@ function SupplierForm({ s, accounts, sector }: { s?: Supplier; accounts: Account
       </div>
       <div className="form-foot"><button className="btn">Enregistrer</button></div>
     </form>
+  );
+}
+
+function DeleteDialog({ kind, name, id, action }: { kind: "client" | "fournisseur"; name: string; id: string; action: (fd: FormData) => Promise<void> }) {
+  return (
+    <Modal label="" title={`Supprimer ce ${kind} ?`} icon="trash" variant="plain sm icon danger-ghost" triggerTitle={`Supprimer le ${kind}`}>
+      <div className="delete-box">
+        <p>Le {kind} <strong>« {name} »</strong> sera supprimé <strong>définitivement</strong> de la base. Cette action est irréversible.</p>
+        <p className="note" style={{ marginTop: 6 }}>
+          Si ce {kind} a encore des {kind === "client" ? "factures, devis ou acomptes" : "factures ou paiements"}, la suppression sera refusée pour protéger la comptabilité.
+        </p>
+      </div>
+      <div className="form-foot">
+        <form method="dialog"><button className="btn ghost">Annuler</button></form>
+        <form action={action}>
+          <input type="hidden" name="id" value={id} />
+          <button className="btn danger">Supprimer définitivement</button>
+        </form>
+      </div>
+    </Modal>
   );
 }

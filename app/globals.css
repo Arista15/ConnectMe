@@ -523,7 +523,11 @@ tr.group-start td { border-top: 2px solid var(--border); }
 .btn.icon { width: 2.25rem; padding: 0; }
 .btn.sm.icon { width: 2rem; }
 .btn.plain { background: transparent; box-shadow: none; color: var(--foreground); }
+.delete-box { border-left: 3px solid var(--destructive); background: var(--destructive-soft); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-size: 0.9rem; }
+.delete-box p { margin: 0; }
 .btn.plain:hover { background: var(--accent-soft); color: var(--accent-foreground); }
+.btn.danger-ghost { color: var(--destructive); }
+.btn.danger-ghost:hover { background: var(--destructive-soft); color: var(--destructive); }
 .ai-box { border: 1px dashed var(--input); border-radius: var(--radius-sm); background: color-mix(in oklab, var(--muted) 50%, transparent); padding: 0.85rem; margin-bottom: 1rem; }
 .ai-box .ai-title { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.6rem; }
 .ai-box .ai-title svg { color: oklch(62% 0.14 80); }
@@ -784,7 +788,7 @@ dialog.modal[open] { animation: modal-in 0.18s var(--ease); }
 .print-letterhead { display: none; }
 
 .invoice-doc { position: relative; max-width: 52rem; margin: 0 auto 1.5rem; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem 2.75rem 1.75rem; box-shadow: 0 10px 30px rgb(15 30 60 / 0.08); overflow: hidden; }
-.inv-stamp { position: absolute; top: 9.5rem; right: 2.5rem; transform: rotate(-14deg); border: 3px solid currentColor; border-radius: 6px; padding: 0.2rem 0.9rem; font-family: var(--font-serif); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.22; pointer-events: none; }
+.inv-stamp { display: inline-block; margin: 0.25rem 0 1rem 1rem; transform: rotate(-10deg); border: 3px solid currentColor; border-radius: 6px; padding: 0.2rem 0.9rem; font-family: var(--font-serif); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.55; pointer-events: none; }
 .inv-stamp.paid { color: var(--success-foreground); }
 .inv-stamp.void { color: var(--destructive); }
 .inv-parties { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
@@ -823,7 +827,6 @@ dialog.modal[open] { animation: modal-in 0.18s var(--ease); }
   .lh-name { font-size: 1.35rem; }
   .lh-title { font-size: 1.5rem; }
   .inv-parties, .inv-bottom, .inv-foot { grid-template-columns: 1fr; }
-  .inv-stamp { top: 1rem; right: 1rem; font-size: 1.1rem; }
 }
 
 @page { size: A4; margin: 12mm 12mm 14mm; }
@@ -832,7 +835,6 @@ dialog.modal[open] { animation: modal-in 0.18s var(--ease); }
   .print-letterhead { display: block; }
   .content:has(.invoice-doc) .print-letterhead, .doc-page .print-letterhead { display: none; }
   .invoice-doc { border: 0; box-shadow: none; padding: 0; max-width: none; margin: 0; }
-  .inv-stamp { opacity: 0.18; }
   .inv-table tr, .inv-bottom, .inv-foot { break-inside: avoid; }
   .doc-bar { display: none; }
 }

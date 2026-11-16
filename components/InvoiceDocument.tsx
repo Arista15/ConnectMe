@@ -22,7 +22,6 @@ export default function InvoiceDocument({
 
   return (
     <article className="invoice-doc">
-      {stamp && <div className={`inv-stamp ${stamp[1]}`}>{stamp[0]}</div>}
       <Letterhead
         site={site}
         title={kind}
@@ -65,6 +64,7 @@ export default function InvoiceDocument({
 
       <section className="inv-bottom">
         <div className="inv-notes">
+          {stamp && <div className={`inv-stamp ${stamp[1]}`}>{stamp[0]}</div>}
           {notes && (<><div className="inv-label">Observations</div><p style={{ whiteSpace: "pre-wrap", margin: "4px 0 0" }}>{notes}</p></>)}
           {kind === "Devis" && <p className="xs t-muted" style={{ marginTop: 8 }}>Devis valable jusqu&apos;à la date indiquée. Toute commande vaut acceptation des conditions ci-dessus.</p>}
         </div>

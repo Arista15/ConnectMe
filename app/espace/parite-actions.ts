@@ -259,3 +259,25 @@ export async function quickCustomerInvoice(fd: FormData) {
   if (error) fail(path, error.message);
   done(path, "Facture client enregistrée et écriture passée au journal.");
 }
+
+// ---------------------------------------------------------------- Tiers : suppression définitive
+async function deleteThirdParty(fd: FormData, table: "customers" | "suppliers") {
+  const site = await getActiveSite();
+  const onglet = table === "customers" ? "clients" : "fournisseurs";
+  const path = `/espace/tiers?onglet=${onglet}`;
+  const supabase = await createClient();
+  const { data, error } = await supabase.from(table).delete().eq("id", str(fd, "id")).eq("site_id", site.id).select("name");
+  if (error) {
+    if (error.code === "23503") {
+      fail(path, table === "customers"
+        ? "Suppression impossible : ce client a des factures, devis ou acomptes enregistrés. Annulez ou supprimez-les d'abord."
+        : "Suppression impossible : ce fournisseur a des factures ou des paiements enregistrés. Supprimez-les d'abord.");
+    }
+    fail(path, error.message);
+  }
+  if (!data || data.length === 0) fail(path, "Élément introuvable ou déjà supprimé.");
+  done(path, `${table === "customers" ? "Client" : "Fournisseur"} « ${data[0].name} » supprimé.`);
+}
+
+export async function deleteCustomer(fd: FormData) { return deleteThirdParty(fd, "customers"); }
+export async function deleteSupplier(fd: FormData) { return deleteThirdParty(fd, "suppliers"); }
