@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import PublicShell from "@/components/PublicShell";
+import AuthShell from "@/components/AuthShell";
 import Flash from "@/components/Flash";
 import { createClient } from "@/lib/supabase/server";
 import { completeFirstLogin } from "@/app/auth/actions";
@@ -14,7 +14,7 @@ export default async function FirstLoginPage({ searchParams }: { searchParams: P
   if (!profile?.must_change_credentials) redirect("/espace");
   const sp = await searchParams;
   return (
-    <PublicShell>
+    <AuthShell>
       <div className="auth-box"><div className="card">
         <h1>Configurer le compte directeur</h1>
         <p className="muted">Avant d’ouvrir votre espace, choisissez votre nom d’utilisateur et un nouveau mot de passe.</p>
@@ -24,9 +24,9 @@ export default async function FirstLoginPage({ searchParams }: { searchParams: P
           <div className="field"><label htmlFor="username">Nouveau nom d’utilisateur</label><input id="username" name="username" autoComplete="username" minLength={3} maxLength={40} required /></div>
           <div className="field"><label htmlFor="password">Nouveau mot de passe (10 caractères minimum)</label><input id="password" name="password" type="password" autoComplete="new-password" minLength={10} required /></div>
           <div className="field"><label htmlFor="confirm">Confirmer le mot de passe</label><input id="confirm" name="confirm" type="password" autoComplete="new-password" minLength={10} required /></div>
-          <button className="btn" style={{ width: "100%", justifyContent: "center" }}>Enregistrer et continuer</button>
+          <button className="btn block">Enregistrer et continuer</button>
         </form>
       </div></div>
-    </PublicShell>
+    </AuthShell>
   );
 }

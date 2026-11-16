@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Flash from "@/components/Flash";
+import Icon from "@/components/Icon";
 import InvoiceForm from "@/components/InvoiceForm";
+import { PageHeader } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveSite, getAccounts } from "@/lib/session";
 import { today } from "@/lib/format";
@@ -21,13 +23,14 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <div className="page-head">
-        <div><h1>Nouvelle facture client</h1><p className="muted">Site {site.code} · numérotation FA-{site.code}-AAAA-NNNN automatique</p></div>
-        <Link href="/espace/factures-clients" className="btn ghost">Retour</Link>
-      </div>
+      <PageHeader
+        title="Nouvelle facture client"
+        subtitle={<>Site {site.code} · numérotation <span className="num">FA-{site.code}-AAAA-NNNN</span> automatique</>}
+        actions={<Link href="/espace/factures-clients" className="btn ghost"><Icon name="back" /> Factures</Link>}
+      />
       <Flash ok={sp.ok} err={sp.err} />
       {(customers ?? []).length === 0 ? (
-        <div className="alert info">Aucun client sur ce site. <Link href="/espace/tiers">Créer un client</Link> d'abord.</div>
+        <div className="alert info">Aucun client sur ce site. <Link href="/espace/tiers">Créer un client</Link> d&apos;abord.</div>
       ) : (
         <InvoiceForm
           accounts={accounts} sector={site.sector} customers={customers ?? []}

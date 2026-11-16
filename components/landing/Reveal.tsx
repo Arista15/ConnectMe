@@ -1,0 +1,26 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+
+/** Fait apparaître son contenu (fondu + glissement) quand il entre à l'écran. */
+export default function Reveal({ children, delay = 0, className = "", as: Tag = "div" }: {
+  children: React.ReactNode; delay?: number; className?: string; as?: "div" | "section" | "article" | "li";
+}) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.classList.add("lp-reveal");
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add("in"); io.disconnect(); }
+    }, { threshold: 0.15 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <Tag ref={ref as any} className={className} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </Tag>
+  );
+}

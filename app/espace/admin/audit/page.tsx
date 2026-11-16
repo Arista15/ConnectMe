@@ -1,4 +1,5 @@
 import PrintButton from "@/components/PrintButton";
+import { PageHeader, Panel, Empty } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/session";
 import { dateTimeFr, isDate, rel } from "@/lib/format";
@@ -45,45 +46,49 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <div className="page-head">
-        <div><h1>Historique d'audit</h1><p className="muted">Qui a comptabilisé quelle écriture, quand, sur quel site et dans quels comptes.</p></div>
-        <PrintButton />
-      </div>
-      <form className="card row no-print" method="get">
-        <div><label>Site</label><select name="site" defaultValue={sp.site ?? ""}><option value="">Tous</option>{(sites ?? []).map((s) => <option key={s.id} value={s.id}>{s.code}</option>)}</select></div>
-        <div><label>Comptable</label><select name="user" defaultValue={sp.user ?? ""}><option value="">Tous</option>{(users ?? []).map((u) => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}</select></div>
-        <div><label>Action</label><select name="action" defaultValue={sp.action ?? ""}><option value="">Toutes</option>{Object.entries(ACTIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-        <div><label>Compte</label><input name="compte" defaultValue={sp.compte ?? ""} placeholder="ex. 6053" /></div>
-        <div><label>Du</label><input type="date" name="du" defaultValue={sp.du ?? ""} /></div>
-        <div><label>Au</label><input type="date" name="au" defaultValue={sp.au ?? ""} /></div>
-        <button className="btn shrink">Filtrer</button>
+      <PageHeader
+        title="Historique des écritures"
+        subtitle="Qui a comptabilisé quelle écriture : date, montant, compte et site."
+        actions={<PrintButton />}
+      />
+      <form className="filters toolbar no-print" method="get">
+        <label>Comptable<select name="user" defaultValue={sp.user ?? ""}><option value="">Tous les comptables</option>{(users ?? []).map((u) => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}</select></label>
+        <label>Site<select name="site" defaultValue={sp.site ?? ""}><option value="">Tous les sites</option>{(sites ?? []).map((s) => <option key={s.id} value={s.id}>{s.code}</option>)}</select></label>
+        <label>Action<select name="action" defaultValue={sp.action ?? ""}><option value="">Toutes</option>{Object.entries(ACTIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+        <label>Compte<input name="compte" defaultValue={sp.compte ?? ""} placeholder="ex. 6053" /></label>
+        <label>Du<input type="date" name="du" defaultValue={sp.du ?? ""} /></label>
+        <label>Au<input type="date" name="au" defaultValue={sp.au ?? ""} /></label>
+        <button className="btn ghost">Filtrer</button>
       </form>
       {error && <div className="alert err">{error.message}</div>}
-      <div className="table-wrap">
-        <table>
-          <thead><tr><th>Date</th><th>Comptable</th><th>Site</th><th>Action</th><th>Détails</th></tr></thead>
-          <tbody>
-            {(rows ?? []).map((r) => {
-              const d = (r.details ?? {}) as Record<string, unknown>;
-              return (
-                <tr key={r.id}>
-                  <td style={{ whiteSpace: "nowrap" }}>{dateTimeFr(r.at)}</td>
-                  <td>{rel(r.profiles)?.full_name || rel(r.profiles)?.email || "—"}</td>
-                  <td>{rel(r.sites)?.code ?? "—"}</td>
-                  <td>{ACTIONS[r.action] ?? r.action}</td>
-                  <td className="small">
-                    {r.action === "ecriture.comptabilisee" ? (
-                      <>Jnl {String(d.journal)} · {String(d.libelle)} · pièce {String(d.piece || "—")} · {String(d.montant)} {String(d.devise)} · comptes {(d.comptes as string[] | undefined)?.join(", ")}</>
-                    ) : (
-                      Object.entries(d).map(([k, v]) => `${k} : ${typeof v === "object" ? JSON.stringify(v) : String(v)}`).join(" · ")
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Panel>
+        {(rows ?? []).length === 0 ? <Empty>Aucun événement.</Empty> : (
+          <table>
+            <thead><tr><th>Date et heure</th><th>Comptable</th><th>Site</th><th>Action</th><th>Détails</th></tr></thead>
+            <tbody>
+              {(rows ?? []).map((r) => {
+                const d = (r.details ?? {}) as Record<string, unknown>;
+                return (
+                  <tr key={r.id}>
+                    <td className="mono xs nowrap">{dateTimeFr(r.at)}</td>
+                    <td className="fw-500">{rel(r.profiles)?.full_name || rel(r.profiles)?.email || "—"}</td>
+                    <td className="mono t-muted">{rel(r.sites)?.code ?? "—"}</td>
+                    <td className={r.action === "site.code_refuse" ? "fw-600 t-danger" : undefined}>{ACTIONS[r.action] ?? r.action}</td>
+                    <td className="xs">
+                      {r.action === "ecriture.comptabilisee" ? (
+                        <>Jnl <span className="num">{String(d.journal)}</span> · {String(d.libelle)} · pièce <span className="num">{String(d.piece || "—")}</span> · <span className="num">{String(d.montant)} {String(d.devise)}</span> · comptes <span className="num">{(d.comptes as string[] | undefined)?.join(", ")}</span></>
+                      ) : (
+                        Object.entries(d).map(([k, v]) => `${k} : ${typeof v === "object" ? JSON.stringify(v) : String(v)}`).join(" · ")
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Panel>
+      <p className="note">500 derniers événements.</p>
     </>
   );
 }

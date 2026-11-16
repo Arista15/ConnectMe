@@ -1,6 +1,8 @@
 import Flash from "@/components/Flash";
 import EntryForm from "@/components/EntryForm";
 import PrintButton from "@/components/PrintButton";
+import Modal from "@/components/Modal";
+import { PageHeader, Panel, Empty } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveSite, getAccounts } from "@/lib/session";
 import { dateFr, num, monthBounds, today, JOURNALS, rel, isDate } from "@/lib/format";
@@ -40,50 +42,53 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Journal · {site.name}</h1>
-          <p className="muted">Écritures en partie double. Les écritures automatiques proviennent des factures et paiements.</p>
-        </div>
-        <PrintButton />
-      </div>
+      <PageHeader
+        title="Journal"
+        subtitle={<>{site.code} — {site.name} · écritures en partie double ; les écritures automatiques viennent des factures et paiements</>}
+        actions={<>
+          <PrintButton />
+          <Modal label="Nouvelle écriture" title="Nouvelle écriture" icon="plus" size="xl">
+            <EntryForm accounts={accounts} sector={site.sector} templates={templates ?? []} action={postEntry} today={today()} />
+          </Modal>
+        </>}
+      />
       <Flash ok={sp.ok} err={sp.err ?? error?.message} />
 
-      <div className="no-print">
-        <EntryForm accounts={accounts} sector={site.sector} templates={templates ?? []} action={postEntry} today={today()} />
-      </div>
-
-      <form className="card row no-print" method="get">
-        <div><label>Du</label><input type="date" name="du" defaultValue={from} /></div>
-        <div><label>Au</label><input type="date" name="au" defaultValue={to} /></div>
-        <div>
-          <label>Journal</label>
+      <form className="filters toolbar no-print" method="get">
+        <label>Du<input type="date" name="du" defaultValue={from} /></label>
+        <label>Au<input type="date" name="au" defaultValue={to} /></label>
+        <label>
+          Journal
           <select name="journal" defaultValue={sp.journal ?? ""}>
             <option value="">Tous</option>
-            {Object.entries(JOURNALS).map(([k, v]) => <option key={k} value={k}>{k} – {v}</option>)}
+            {Object.entries(JOURNALS).map(([k, v]) => <option key={k} value={k}>{k} — {v}</option>)}
           </select>
-        </div>
-        <div><label>Compte (commence par)</label><input name="compte" defaultValue={sp.compte ?? ""} placeholder="ex. 411" /></div>
-        <div><label>Recherche</label><input name="q" defaultValue={sp.q ?? ""} placeholder="Libellé ou pièce" /></div>
-        <button className="btn shrink">Filtrer</button>
+        </label>
+        <label>Compte<input name="compte" defaultValue={sp.compte ?? ""} placeholder="ex. 411" /></label>
+        <label>Recherche<input name="q" defaultValue={sp.q ?? ""} placeholder="Libellé ou pièce" /></label>
+        <button className="btn ghost">Filtrer</button>
       </form>
 
-      <p className="muted small">{entries.length} écriture(s) du {dateFr(from)} au {dateFr(to)}{entries.length === 300 && " (300 max. affichées — affinez les filtres)"}.</p>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>N°</th><th>Date</th><th>Jnl</th><th>Pièce</th><th>Compte</th><th>Libellé</th>
-              <th className="num">Débit</th><th className="num">Crédit</th><th>Dev.</th><th className="no-print"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((e) => (
-              <EntryRows key={e.id} e={e} canReverse={e.source_type === "manuel" && !reversed.has(e.id)} />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Panel
+        title={`${entries.length} écriture(s) du ${dateFr(from)} au ${dateFr(to)}`}
+        actions={entries.length === 300 ? <span className="xs t-muted">300 max. affichées — affinez les filtres</span> : undefined}
+      >
+        {entries.length === 0 ? <Empty>Aucune écriture sur la période.</Empty> : (
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th><th>Date</th><th>Jnl</th><th>Pièce</th><th>Compte</th><th>Libellé</th>
+                <th className="num">Débit</th><th className="num">Crédit</th><th>Dev.</th><th className="no-print"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((e) => (
+                <EntryRows key={e.id} e={e} canReverse={e.source_type === "manuel" && !reversed.has(e.id)} />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Panel>
     </>
   );
 }
@@ -95,28 +100,29 @@ function EntryRows({ e, canReverse }: { e: any; canReverse: boolean }) {
   return (
     <>
       {lines.map((l, i) => (
-        <tr key={l.id} className={i === 0 ? "subtotal" : undefined}>
+        <tr key={l.id} className={i === 0 ? "group-start" : undefined}>
           {i === 0 ? (
             <>
-              <td>{e.number}</td><td>{dateFr(e.entry_date)}</td><td>{e.journal_code}</td><td>{e.reference}</td>
+              <td className="mono">{e.number}</td><td className="mono">{dateFr(e.entry_date)}</td>
+              <td className="mono">{e.journal_code}</td><td className="mono xs">{e.reference}</td>
             </>
           ) : (<><td></td><td></td><td></td><td></td></>)}
           <td className="mono">{l.account_code}</td>
           <td>
-            {i === 0 ? <strong>{e.label}</strong> : l.label}
-            {i === 0 && <div className="small muted">{l.label} · {author?.full_name || author?.email}{e.currency === "CDF" && ` · taux ${e.exchange_rate}`}</div>}
+            {i === 0 ? <span className="fw-500">{e.label}</span> : <span className="t-muted">{l.label}</span>}
+            {i === 0 && <div className="xs t-muted">{l.label} · {author?.full_name || author?.email}{e.currency === "CDF" && ` · taux ${e.exchange_rate}`}</div>}
           </td>
           <td className="num">{num(l.debit) || (Number(l.debit_usd) ? `${num(l.debit_usd)} $` : "")}</td>
           <td className="num">{num(l.credit) || (Number(l.credit_usd) ? `${num(l.credit_usd)} $` : "")}</td>
-          <td>{i === 0 ? e.currency : ""}</td>
+          <td className="mono xs">{i === 0 ? e.currency : ""}</td>
           <td className="no-print">
-            {i === 0 && canReverse && (
+            {i === 0 && (canReverse ? (
               <form action={reverseEntry}>
                 <input type="hidden" name="entry_id" value={e.id} />
                 <input type="hidden" name="back" value="/espace/journal" />
-                <button className="linkbtn small">Contre-passer</button>
+                <button className="linkbtn xs">Contre-passer</button>
               </form>
-            )}
+            ) : e.source_type !== "manuel" ? <span className="xs t-muted" title="Écriture créée par une pièce">auto</span> : null)}
           </td>
         </tr>
       ))}

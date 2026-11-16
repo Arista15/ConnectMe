@@ -28,14 +28,18 @@ export function TrialBalanceTable({ rows }: { rows: TBRow[] }) {
   );
   const ok = Math.abs(t.pd - t.pc) < 0.01 && Math.abs(t.cd - t.cc) < 0.01;
   return (
-    <>
-      <div className="table-wrap">
+    <section className="panel">
+      <div className="panel-head serif">
+        <h3>Balance générale</h3>
+        <span className={`badge ${ok ? "ok" : "err"}`}>{ok ? "Balance équilibrée" : "Balance déséquilibrée"}</span>
+      </div>
+      {rows.length === 0 ? <div className="empty">Aucun mouvement sur la période.</div> : (
         <table>
           <thead>
             <tr>
               <th rowSpan={2}>Compte</th><th rowSpan={2}>Intitulé</th>
-              <th colSpan={2} className="num">Solde d'ouverture</th>
-              <th colSpan={2} className="num">Mouvements de la période</th>
+              <th colSpan={2} className="num">Solde d&apos;ouverture</th>
+              <th colSpan={2} className="num">Mouvements</th>
               <th colSpan={2} className="num">Solde de clôture</th>
             </tr>
             <tr>
@@ -61,10 +65,7 @@ export function TrialBalanceTable({ rows }: { rows: TBRow[] }) {
             </tr>
           </tbody>
         </table>
-      </div>
-      <p className={`badge ${ok ? "ok" : "err"}`} style={{ marginTop: 8 }}>
-        {ok ? "Balance équilibrée" : "Attention : balance déséquilibrée"}
-      </p>
-    </>
+      )}
+    </section>
   );
 }

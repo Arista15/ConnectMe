@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PublicShell from "@/components/PublicShell";
+import AuthShell from "@/components/AuthShell";
 import Flash from "@/components/Flash";
 import { requestReset } from "../auth/actions";
 
@@ -8,7 +8,7 @@ export const metadata = { title: "Mot de passe oublié" };
 export default async function ForgotPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const sp = await searchParams;
   return (
-    <PublicShell>
+    <AuthShell>
       <div className="auth-box">
         <div className="card">
           <h1>Mot de passe oublié</h1>
@@ -19,11 +19,11 @@ export default async function ForgotPage({ searchParams }: { searchParams: Promi
               <label htmlFor="email">E-mail</label>
               <input id="email" name="email" type="email" required />
             </div>
-            <button className="btn" style={{ width: "100%", justifyContent: "center" }}>Envoyer le lien</button>
+            <button className="btn block">Envoyer le lien</button>
           </form>
           <p className="small" style={{ marginTop: 12 }}><Link href="/auth">Retour à la connexion</Link></p>
         </div>
       </div>
-    </PublicShell>
+    </AuthShell>
   );
 }

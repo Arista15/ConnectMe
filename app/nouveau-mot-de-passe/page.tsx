@@ -1,4 +1,4 @@
-import PublicShell from "@/components/PublicShell";
+import AuthShell from "@/components/AuthShell";
 import Flash from "@/components/Flash";
 import { setPassword } from "../auth/actions";
 
@@ -7,7 +7,7 @@ export const metadata = { title: "Choisir mon mot de passe" };
 export default async function NewPasswordPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const sp = await searchParams;
   return (
-    <PublicShell>
+    <AuthShell>
       <div className="auth-box">
         <div className="card">
           <h1>Choisir mon mot de passe</h1>
@@ -22,10 +22,10 @@ export default async function NewPasswordPage({ searchParams }: { searchParams: 
               <label htmlFor="confirm">Confirmer</label>
               <input id="confirm" name="confirm" type="password" minLength={10} autoComplete="new-password" required />
             </div>
-            <button className="btn" style={{ width: "100%", justifyContent: "center" }}>Enregistrer</button>
+            <button className="btn block">Enregistrer</button>
           </form>
         </div>
       </div>
-    </PublicShell>
+    </AuthShell>
   );
 }

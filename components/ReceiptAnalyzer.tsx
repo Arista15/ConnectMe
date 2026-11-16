@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AccountSelect from "./AccountSelect";
+import Icon from "./Icon";
 import type { Account } from "@/lib/types";
 
 type Suggestion = {
@@ -50,19 +51,19 @@ export default function ReceiptAnalyzer({
 
   return (
     <>
-      <form className="card" onSubmit={(e) => { e.preventDefault(); analyse(e.currentTarget); }}>
-        <h3 style={{ marginTop: 0 }}>1. Reçu à analyser</h3>
-        <div className="row">
+      <form className="ai-box" data-keep-open onSubmit={(e) => { e.preventDefault(); analyse(e.currentTarget); }}>
+        <div className="ai-title"><Icon name="sparkles" /> Lire le reçu avec l&apos;IA</div>
+        <div className="form-grid">
           <div>
             <label htmlFor="file">Photo ou PDF du reçu</label>
             <input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" />
           </div>
-          <div style={{ flex: "2 1 300px" }}>
+          <div>
             <label htmlFor="text">… ou texte du reçu (copié d'un e-mail, d'un SMS)</label>
             <textarea id="text" name="text" value={text} onChange={(e) => setText(e.target.value)} style={{ minHeight: 70 }} />
           </div>
         </div>
-        <button className="btn gold" disabled={busy}>{busy ? "Analyse en cours…" : "Analyser"}</button>
+        <button className="btn secondary sm" style={{ marginTop: 10 }} disabled={busy}>{busy ? "Analyse en cours…" : "Analyser et pré-remplir"}</button>
         {err && <div className="alert err" style={{ marginTop: 10 }}>{err}</div>}
         {s.account_reason && (
           <div className="alert info" style={{ marginTop: 10 }}>
@@ -74,7 +75,7 @@ export default function ReceiptAnalyzer({
       </form>
 
       <form action={action} className="card" key={key}>
-        <h3 style={{ marginTop: 0 }}>2. Vérifier puis enregistrer</h3>
+        <h3 style={{ marginTop: 0 }}>Vérifier puis enregistrer</h3>
         <p className="small muted">Rien n'est comptabilisé à cette étape : la facture reste « à valider » jusqu'à votre validation.</p>
         <input type="hidden" name="attachment_path" value={attachment} />
         <input type="hidden" name="source_text" value={text} />
@@ -112,7 +113,7 @@ export default function ReceiptAnalyzer({
           <AccountSelect name="expense_account" accounts={accounts} sector={sector} classes={[2, 6]}
             value={account} onChange={setAccount} />
         </div>
-        <button className="btn">Enregistrer le reçu (à valider)</button>
+        <div className="form-foot"><button className="btn">Enregistrer en brouillon (à valider)</button></div>
       </form>
     </>
   );

@@ -29,8 +29,8 @@ export default function InvoiceForm({
 
   return (
     <form action={action} className="card">
-      <div className="row">
-        <div style={{ flex: "2 1 260px" }}>
+      <div className="form-grid g4">
+        <div className="span-2">
           <label htmlFor="customer_id">Client</label>
           <select id="customer_id" name="customer_id" required defaultValue="">
             <option value="" disabled>— Choisir —</option>
@@ -49,7 +49,7 @@ export default function InvoiceForm({
       </div>
       {currency === "CDF" && <p className="small muted">Taux du site appliqué et conservé sur la facture : 1 USD = {rate} CDF.</p>}
 
-      <div className="table-wrap" style={{ marginTop: 12 }}>
+      <div className="panel" style={{ marginTop: 16, marginBottom: 0 }}>
         <table>
           <thead><tr><th>Désignation</th><th style={{ width: 90 }}>Qté</th><th style={{ width: 140 }}>P.U. HT</th><th style={{ width: "28%" }}>Compte de produit</th><th className="num">Montant HT</th><th></th></tr></thead>
           <tbody>
@@ -77,8 +77,10 @@ export default function InvoiceForm({
       <input type="hidden" name="lines" value={JSON.stringify(lines.map((l) => ({
         description: l.description, quantity: n(l.quantity), unit_price: n(l.unit_price), account_code: l.account_code,
       })))} />
-      <button className="btn" disabled={t.sub <= 0}>Émettre et comptabiliser</button>
-      <p className="small muted">Écriture générée au journal des ventes : 411 au débit (TTC), produits et 4431 au crédit.</p>
+      <div className="form-foot">
+        <span className="grow note" style={{ margin: 0 }}>Écriture générée au journal des ventes : 411 au débit (TTC), produits et 4431 au crédit.</span>
+        <button className="btn" disabled={t.sub <= 0}>Émettre et comptabiliser</button>
+      </div>
     </form>
   );
 }

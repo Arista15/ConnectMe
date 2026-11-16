@@ -46,7 +46,7 @@ export default async function MonthlyReport({ searchParams }: { searchParams: Pr
 
       <div className="page-head">
         <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-          <img src="/logo.svg" alt="" width={56} height={56} />
+          <img src="/kbs-logo.png" alt="" width={56} height={56} style={{ borderRadius: 6, objectFit: "contain" }} />
           <div>
             <h1 style={{ margin: 0 }}>Rapport mensuel – {monthLabel}</h1>
             <p className="muted" style={{ margin: 0 }}>Kafaus Business Service SARL · {title}</p>

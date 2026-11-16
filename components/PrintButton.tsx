@@ -1,9 +1,11 @@
 "use client";
 
-export default function PrintButton({ label = "Imprimer / PDF" }: { label?: string }) {
+import Icon from "./Icon";
+
+export default function PrintButton({ label = "Imprimer" }: { label?: string }) {
   return (
     <button type="button" className="btn ghost no-print" onClick={() => window.print()}>
-      {label}
+      <Icon name="printer" /> {label}
     </button>
   );
 }

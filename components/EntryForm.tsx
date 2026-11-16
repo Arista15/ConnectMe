@@ -40,10 +40,9 @@ export default function EntryForm({
   }
 
   return (
-    <form action={action} className="card">
-      <h3 style={{ marginTop: 0 }}>Nouvelle écriture</h3>
-      <div className="row">
-        <div>
+    <form action={action}>
+      <div className="form-grid g4">
+        <div className="span-2">
           <label>Écriture type</label>
           <select defaultValue="" onChange={(e) => applyTemplate(e.target.value)}>
             <option value="">— Aucune —</option>
@@ -79,12 +78,12 @@ export default function EntryForm({
           </select>
         </div>
       </div>
-      <div className="field" style={{ marginTop: 8 }}>
+      <div className="field" style={{ marginTop: 12 }}>
         <label htmlFor="label">Libellé</label>
         <input id="label" name="label" value={label} onChange={(e) => setLabel(e.target.value)} required />
       </div>
 
-      <div className="table-wrap">
+      <div className="panel" style={{ marginBottom: 0 }}>
         <table>
           <thead>
             <tr><th style={{ width: "34%" }}>Compte</th><th>Libellé de ligne</th><th className="num" style={{ width: 140 }}>Débit</th><th className="num" style={{ width: 140 }}>Crédit</th><th></th></tr>
@@ -126,8 +125,11 @@ export default function EntryForm({
       <input type="hidden" name="lines" value={JSON.stringify(lines.map((l) => ({
         account_code: l.account_code, label: l.label || label, debit: n(l.debit), credit: n(l.credit),
       })))} />
-      <div style={{ marginTop: 12 }}>
-        <button className="btn" disabled={!balanced}>Comptabiliser</button>
+      <div className="form-foot">
+        <span className="grow small num">Débit {totals.d.toFixed(2)} · Crédit {totals.c.toFixed(2)}{" "}
+          <span className={balanced ? "t-success" : "t-danger"}>{balanced ? "✓ équilibrée" : totals.d + totals.c > 0 ? `écart ${(totals.d - totals.c).toFixed(2)}` : ""}</span>
+        </span>
+        <button className="btn" disabled={!balanced}>Enregistrer</button>
       </div>
     </form>
   );

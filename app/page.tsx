@@ -1,75 +1,149 @@
 import Link from "next/link";
 import PublicShell from "@/components/PublicShell";
+import Icon, { type IconName } from "@/components/Icon";
+import Reveal from "@/components/landing/Reveal";
+import CountUp from "@/components/landing/CountUp";
 
-const modules = [
-  ["Journal & grand livre", "Écritures en partie double avec date, pièce justificative, comptes au débit et au crédit. Recherche, filtres et impression."],
-  ["Factures clients", "Numérotation par site, écritures automatiques sur le compte client, les produits et la TVA facturée."],
-  ["Factures fournisseurs", "Reçus analysés depuis une photo ou un texte, avec un compte de charge proposé que le comptable valide avant comptabilisation."],
-  ["Dépenses, caisse & banque", "Dépenses, règlements et recettes journalières, rapprochés avec la banque et la caisse, suivi des fournisseurs."],
-  ["États financiers", "Balance, grand livre, compte de résultat et bilan par site et par période, plus un rapport mensuel imprimable en PDF."],
-  ["Rappels par e-mail", "Chaque matin, la liste des factures en retard et de celles qui arrivent à échéance dans les 7 jours."],
+const modules: [IconName, string, string][] = [
+  ["book", "Journal", "Partie double, contrôlée"],
+  ["file", "Factures", "Écriture automatique"],
+  ["sparkles", "Reçus IA", "Photo → compte proposé"],
+  ["wallet", "Caisse & banque", "Rapprochement en un clic"],
+  ["scale", "États", "Bilan, résultat, balance"],
+  ["building", "Multi-sites", "USD / CDF par site"],
+];
+
+const flow: [IconName, string][] = [["receipt", "Pièce"], ["book", "Écriture"], ["scale", "États"]];
+
+const bars = [38, 52, 45, 63, 58, 72, 66, 80, 74, 88, 82, 95];
+
+const accounts = [
+  ["706", "Prestations"], ["705", "Travaux"], ["7061", "Fret"], ["6053", "Carburant"], ["6021", "Matériaux"],
+  ["411", "Clients"], ["401", "Fournisseurs"], ["4431", "TVA facturée"], ["4452", "TVA récupérable"], ["571", "Caisse"], ["521", "Banque"],
 ];
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ setup?: string }> }) {
   const { setup } = await searchParams;
 
   return (
-    <PublicShell>
+    <PublicShell dark>
       {setup === "supabase" && (
-        <div className="container" style={{ padding: "1rem 1.5rem 0" }}>
+        <div className="wrap" style={{ paddingTop: "1rem" }}>
           <div className="alert info">
-            L’espace comptable nécessite une configuration Supabase. Créez un fichier <code>.env.local</code>
-            à partir de <code>.env.example</code>, remplacez les valeurs d’exemple par l’URL et la clé anon
-            de votre projet Supabase, puis relancez <code>npm run dev</code>.
+            Configuration Supabase requise : créez <code>.env.local</code> depuis <code>.env.example</code>, puis relancez <code>npm run dev</code>.
           </div>
         </div>
       )}
-      <section className="hero">
-        <div className="container">
-          <h1>La comptabilité SYSCOHADA de chaque site, de la pièce au bilan.</h1>
-          <p>
-            KBS Comptable centralise les écritures, factures, dépenses et états financiers de vos sites
-            dans un même registre, en dollars américains et en francs congolais.
-          </p>
-          <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-            <Link href="/auth" className="btn gold">Accéder à mon espace</Link>
-            <Link href="/guide-comptables" className="btn ghost" style={{ color: "#fff", borderColor: "#6d8aa8" }}>
-              Lire le guide
-            </Link>
+
+      {/* ───────── Héros ───────── */}
+      <section className="lp-hero dark">
+        <div className="lp-grid-bg" aria-hidden="true" />
+        <div className="lp-orb lp-orb-a" aria-hidden="true" />
+        <div className="lp-orb lp-orb-b" aria-hidden="true" />
+        <div className="wrap lp-hero-in">
+          <div className="lp-hero-text">
+            <p className="eyebrow lp-fade" style={{ animationDelay: "0ms" }}>SYSCOHADA · USD / CDF</p>
+            <h1 className="lp-fade" style={{ animationDelay: "120ms" }}>
+              Du reçu<br />au <span className="lp-shine">bilan</span>.
+            </h1>
+            <p className="lp-lead lp-fade" style={{ animationDelay: "240ms" }}>La comptabilité de tous vos sites, au même endroit.</p>
+            <div className="lp-actions lp-fade" style={{ animationDelay: "360ms" }}>
+              <Link href="/auth" className="btn secondary lg lp-cta">Accéder au site <Icon name="arrow" /></Link>
+              <Link href="/connexion-site" className="btn on-dark lg">Ouvrir mon site</Link>
+            </div>
+          </div>
+
+          {/* Aperçu animé de l'application */}
+          <div className="lp-stage lp-fade" style={{ animationDelay: "300ms" }} aria-hidden="true">
+            <div className="lp-mock">
+              <div className="lp-mock-top"><i /><i /><i /><span>Tableau de bord · S01</span></div>
+              <div className="lp-kpis">
+                <div><small>Chiffre d&apos;affaires</small><b><CountUp to={15000} suffix=" $" /></b></div>
+                <div><small>Charges</small><b><CountUp to={8120} suffix=" $" /></b></div>
+                <div><small>Résultat</small><b className="up"><CountUp to={6880} suffix=" $" /></b></div>
+              </div>
+              <div className="lp-chart">
+                {bars.map((h, i) => <span key={i} style={{ height: `${h}%`, animationDelay: `${i * 70}ms` }} />)}
+              </div>
+              <div className="lp-entry">
+                <div className="lp-line" style={{ animationDelay: "0s" }}><em>D</em><code>411</code>Clients<b>1 160 $</b></div>
+                <div className="lp-line" style={{ animationDelay: ".6s" }}><em className="c">C</em><code>706</code>Prestations<b>1 000 $</b></div>
+                <div className="lp-line" style={{ animationDelay: "1.2s" }}><em className="c">C</em><code>4431</code>TVA facturée<b>160 $</b></div>
+                <div className="lp-ok">✓ équilibrée</div>
+              </div>
+            </div>
+            <div className="lp-float lp-toast"><Icon name="sparkles" /> Reçu analysé · <code>6053</code> proposé</div>
+            <div className="lp-float lp-rate"><span className="lp-dot" /> 1 $ = 2 850 FC</div>
           </div>
         </div>
       </section>
 
-      <section className="container" style={{ padding: "2.5rem 1.5rem" }}>
-        <h2>Modules</h2>
-        <div className="grid grid-3">
-          {modules.map(([t, d]) => (
-            <div className="card feature" key={t}>
-              <h3>{t}</h3>
-              <p className="muted">{d}</p>
-            </div>
+      {/* ───────── Bande défilante ───────── */}
+      <div className="lp-marquee" aria-hidden="true">
+        <div className="lp-track">
+          {[...accounts, ...accounts].map(([c, l], i) => <span key={i}><code>{c}</code>{l}</span>)}
+        </div>
+      </div>
+
+      {/* ───────── Modules ───────── */}
+      <section className="lp-section">
+        <div className="wrap">
+          <Reveal><h2 className="lp-h2">Tout le cycle comptable.</h2></Reveal>
+          <div className="lp-tiles">
+            {modules.map(([icon, t, d], i) => (
+              <Reveal key={t} delay={i * 80} className="lp-tile">
+                <span className="lp-ico"><Icon name={icon} /></span>
+                <strong>{t}</strong>
+                <small>{d}</small>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────── Flux ───────── */}
+      <section className="lp-section lp-band">
+        <div className="wrap">
+          <Reveal><h2 className="lp-h2 t-center">Une pièce. Une écriture. Un état.</h2></Reveal>
+          <Reveal delay={150} className="lp-flow">
+            <div className="lp-rail" aria-hidden="true"><span className="lp-runner" /></div>
+            {flow.map(([icon, t], i) => (
+              <div key={t} className="lp-node" style={{ animationDelay: `${i * 1.2}s` }}>
+                <span><Icon name={icon} /></span>
+                <strong>{t}</strong>
+              </div>
+            ))}
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ───────── Chiffres ───────── */}
+      <section className="lp-section">
+        <div className="wrap lp-stats">
+          {[
+            [3, "", "secteurs"],
+            [2, "", "devises"],
+            [12, " h", "d'accès sécurisé"],
+            [100, " %", "SYSCOHADA"],
+          ].map(([n, s, l], i) => (
+            <Reveal key={String(l)} delay={i * 100} className="lp-stat">
+              <b><CountUp to={Number(n)} suffix={String(s)} duration={1200} /></b>
+              <span>{l}</span>
+            </Reveal>
           ))}
         </div>
+      </section>
 
-        <h2>Pensé pour plusieurs sites et plusieurs métiers</h2>
-        <div className="grid grid-2">
-          <div className="card">
-            <h3>Contrôles multi-sites</h3>
-            <ul>
-              <li>Chaque site est tenu séparément, puis consolidé dans les rapports communs.</li>
-              <li>Un comptable ne voit que les sites qui lui sont attribués.</li>
-              <li>Chaque site a son propre taux USD/CDF ; chaque document conserve son taux historique.</li>
-              <li>Synthèse par site : chiffre d'affaires, charges, créances et dettes.</li>
-              <li>Historique d'audit : qui a comptabilisé quelle écriture, quand, sur quel site et dans quel compte.</li>
-            </ul>
+      {/* ───────── Appel à l'action ───────── */}
+      <section className="lp-final dark">
+        <div className="lp-orb lp-orb-c" aria-hidden="true" />
+        <Reveal className="wrap lp-final-in">
+          <h2>Prêt à ouvrir votre site ?</h2>
+          <div className="lp-actions" style={{ justifyContent: "center" }}>
+            <Link href="/auth" className="btn secondary lg lp-cta">Accéder au site <Icon name="arrow" /></Link>
+            <Link href="/guide-comptables" className="btn on-dark lg">Guide du comptable</Link>
           </div>
-          <div className="card">
-            <h3>Trois secteurs</h3>
-            <p>Services professionnels, BTP et transport/logistique disposent chacun de leurs comptes usuels et d'écritures types, pour une saisie homogène d'un site à l'autre.</p>
-            <h3>Accès sécurisé</h3>
-            <p>Pas d'inscription libre : l'administrateur invite chaque comptable par e-mail et lui attribue ses sites. Un site s'ouvre avec le compte personnel et un code d'accès, pour 12 heures ou jusqu'à la déconnexion.</p>
-          </div>
-        </div>
+        </Reveal>
       </section>
     </PublicShell>
   );

@@ -1,11 +1,12 @@
 import Link from "next/link";
 import PeriodFilter from "@/components/PeriodFilter";
 import PrintButton from "@/components/PrintButton";
+import { PageHeader, Panel, Seg } from "@/components/ui";
 import { StatementTable, TrialBalanceTable } from "@/components/Statements";
 import { createClient } from "@/lib/supabase/server";
 import { resolveScope } from "@/lib/scope";
 import { incomeStatement, balanceSheet, type TBRow } from "@/lib/statements";
-import { dateFr } from "@/lib/format";
+import { dateFr, money } from "@/lib/format";
 
 export const metadata = { title: "États financiers" };
 
@@ -19,43 +20,50 @@ export default async function StatementsPage({ searchParams }: { searchParams: P
   const { data, error } = await supabase.rpc("report_trial_balance", { p_sites: siteIds, p_from: from, p_to: to });
   const rows = (data ?? []) as TBRow[];
   const qs = (t: string) => `?${new URLSearchParams({ type: t, du: from, au: to, perimetre: scope })}`;
+  const is = incomeStatement(rows);
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>États financiers</h1>
-          <p className="muted">{title} · du {dateFr(from)} au {dateFr(to)} · en USD (contre-valeur au taux historique de chaque document)</p>
-        </div>
-        <div className="row shrink">
-          <Link className="btn ghost shrink no-print" href={`/rapport?mois=${from.slice(0, 7)}&perimetre=${scope}`}>Rapport mensuel PDF</Link>
+      <PageHeader
+        title="États financiers"
+        subtitle={<>{title} · du {dateFr(from)} au {dateFr(to)} · USD (contre-valeur au taux historique de chaque document)</>}
+        actions={<>
+          <Link className="btn ghost" href={`/rapport?mois=${from.slice(0, 7)}&perimetre=${scope}`}>Rapport mensuel PDF</Link>
           <PrintButton />
-        </div>
+        </>}
+      />
+      <div className="toolbar"><PeriodFilter from={from} to={to} scope={scope} open={open} hidden={{ type }} /></div>
+      <div className="print-only-brand" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <img src="/kbs-logo.png" alt="Logo KBS" width={40} height={40} style={{ objectFit: "contain" }} />
+        <span className="small fw-600 t-muted">K.B.S SARL · {title}</span>
       </div>
-      <div className="tabs">
-        {TABS.map(([k, v]) => <Link key={k} href={qs(k)} className={type === k ? "active" : ""}>{v}</Link>)}
-      </div>
-      <PeriodFilter from={from} to={to} scope={scope} open={open} hidden={{ type }} />
+      <Seg items={TABS.map(([k, v]) => ({ href: qs(k), label: v, active: type === k }))} />
       {error && <div className="alert err">{error.message}</div>}
 
       {type === "balance" && <TrialBalanceTable rows={rows} />}
 
       {type === "resultat" && (
-        <div className="card" style={{ maxWidth: 760 }}>
-          <StatementTable title={`Compte de résultat — ${title}`} lines={incomeStatement(rows).lines} />
-        </div>
+        <>
+          <Panel title={`Compte de résultat — ${title}`} serif className="" >
+            <StatementTable lines={is.lines} />
+          </Panel>
+          <div className={`result-box${is.net < 0 ? " neg" : ""}`}>
+            <div className="label">{is.net >= 0 ? "Bénéfice" : "Perte"} de la période</div>
+            <div className="value">{money(is.net)}</div>
+          </div>
+        </>
       )}
 
       {type === "bilan" && (() => {
         const b = balanceSheet(rows);
         return (
           <>
-            <p className="muted small">Bilan au {dateFr(to)} (soldes cumulés ; résultat depuis le 1er janvier {to.slice(0, 4)}).</p>
-            <div className="grid grid-2">
-              <div className="card"><StatementTable title="Actif" lines={b.actif} /></div>
-              <div className="card"><StatementTable title="Passif" lines={b.passif} /></div>
+            <p className="note" style={{ marginTop: 0, marginBottom: 12 }}>Bilan au {dateFr(to)} (soldes cumulés ; résultat depuis le 1er janvier {to.slice(0, 4)}).</p>
+            <div className="cols-2">
+              <Panel title="Actif" serif><StatementTable lines={b.actif} /></Panel>
+              <Panel title="Passif" serif><StatementTable lines={b.passif} /></Panel>
             </div>
-            {!b.balanced && <div className="alert err">Écart actif / passif : vérifiez la balance.</div>}
+            {!b.balanced && <div className="alert err" style={{ marginTop: 16 }}>Écart actif / passif : vérifiez la balance.</div>}
           </>
         );
       })()}

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Flash from "@/components/Flash";
+import Modal from "@/components/Modal";
 import AccountSelect from "@/components/AccountSelect";
+import { PageHeader, Panel, Empty } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveSite, getAccounts } from "@/lib/session";
 import { getTreasuries } from "@/lib/treasury";
@@ -43,132 +45,125 @@ export default async function TreasuryPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <div className="page-head">
-        <div><h1>Caisse & banque</h1><p className="muted">Soldes en devise, règlements et rapprochement.</p></div>
-      </div>
+      <PageHeader
+        title="Caisse & banque"
+        subtitle="Soldes en devise, règlements clients et fournisseurs, rapprochement bancaire."
+        actions={<>
+          <Modal label="Ajouter un compte" title="Ajouter une caisse ou un compte bancaire" variant="ghost" icon="plus">
+            <form action={saveTreasuryAccount}>
+              <div className="form-grid">
+                <div className="span-2"><label>Nom</label><input name="name" placeholder="ex. Rawbank USD" required /></div>
+                <div><label>Type</label><select name="kind"><option value="banque">Banque</option><option value="caisse">Caisse</option></select></div>
+                <div><label>Devise</label><select name="currency"><option>USD</option><option>CDF</option></select></div>
+                <div className="span-2"><label>Compte SYSCOHADA</label><AccountSelect name="account_code" accounts={accounts} sector={site.sector} classes={[5]} required /></div>
+              </div>
+              <p className="note">Utilisez un sous-compte distinct par banque pour obtenir des soldes séparés.</p>
+              <div className="form-foot"><button className="btn">Ajouter</button></div>
+            </form>
+          </Modal>
+          <Modal label="Payer un fournisseur" title="Payer une facture fournisseur" variant="ghost" size="lg">
+            <form action={recordPayment}>
+              <input type="hidden" name="kind" value="reglement_fournisseur" />
+              <input type="hidden" name="back" value={back} />
+              <div className="form-grid">
+                <div className="span-2">
+                  <label>Facture</label>
+                  <select name="supplier_invoice_id" required defaultValue="">
+                    <option value="" disabled>— Choisir —</option>
+                    {(openSup ?? []).map((i) => (
+                      <option key={i.id} value={i.id}>{i.supplier_name} {i.reference} · reste {money(Number(i.total) - Number(i.amount_paid), i.currency)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div><label>Montant (devise de la facture)</label><input name="amount" inputMode="decimal" required /></div>
+                <div><label>Date</label><input type="date" name="payment_date" defaultValue={today()} /></div>
+                <div><label>Depuis</label><select name="treasury_account_id" required>{tOpts}</select></div>
+                <div><label>Référence</label><input name="reference" /></div>
+              </div>
+              <div className="form-foot"><button className="btn">Enregistrer le paiement</button></div>
+            </form>
+          </Modal>
+          <Modal label="Encaisser un client" title="Encaisser une facture client" icon="wallet" size="lg">
+            <form action={recordPayment}>
+              <input type="hidden" name="kind" value="reglement_client" />
+              <input type="hidden" name="back" value={back} />
+              <div className="form-grid">
+                <div className="span-2">
+                  <label>Facture</label>
+                  <select name="customer_invoice_id" required defaultValue="">
+                    <option value="" disabled>— Choisir —</option>
+                    {(openCust ?? []).map((i) => (
+                      <option key={i.id} value={i.id}>{i.number} · {rel(i.customers)?.name} · reste {money(Number(i.total) - Number(i.amount_paid), i.currency)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div><label>Montant (devise de la facture)</label><input name="amount" inputMode="decimal" required /></div>
+                <div><label>Date</label><input type="date" name="payment_date" defaultValue={today()} /></div>
+                <div><label>Sur</label><select name="treasury_account_id" required>{tOpts}</select></div>
+                <div><label>Référence</label><input name="reference" placeholder="N° chèque, virement…" /></div>
+              </div>
+              <div className="form-foot"><button className="btn">Enregistrer le paiement</button></div>
+            </form>
+          </Modal>
+        </>}
+      />
       <Flash ok={sp.ok} err={sp.err} />
 
-      <div className="grid grid-4">
+      <div className="stats">
         {treasuries.map((t) => (
-          <Link key={t.id} href={`/espace/tresorerie?compte=${t.id}`} className="card kpi" style={{ textDecoration: "none", color: "inherit" }}>
-            <div className="label">{t.name} · {t.account_code}</div>
-            <div className="value">{money(t.balance, t.currency)}</div>
+          <Link key={t.id} href={`/espace/tresorerie?compte=${t.id}`} className="stat">
+            <div className="label">{t.name} · <span className="num">{t.account_code}</span></div>
+            <div className={`value${t.balance < 0 ? " t-danger" : ""}`}>{money(t.balance, t.currency)}</div>
             {t.unreconciled > 0 && <span className="badge warn">{t.unreconciled} non rapproché(s)</span>}
             {t.balance < 0 && t.kind === "caisse" && <span className="badge err">Caisse négative</span>}
           </Link>
         ))}
       </div>
 
-      <div className="grid grid-2">
-        <form action={recordPayment} className="card">
-          <h3 style={{ marginTop: 0 }}>Encaisser une facture client</h3>
-          <input type="hidden" name="kind" value="reglement_client" />
-          <input type="hidden" name="back" value={back} />
-          <div className="field">
-            <label>Facture</label>
-            <select name="customer_invoice_id" required defaultValue="">
-              <option value="" disabled>— Choisir —</option>
-              {(openCust ?? []).map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.number} · {rel(i.customers)?.name} · reste {money(Number(i.total) - Number(i.amount_paid), i.currency)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="row">
-            <div><label>Montant (devise de la facture)</label><input name="amount" inputMode="decimal" required /></div>
-            <div><label>Date</label><input type="date" name="payment_date" defaultValue={today()} /></div>
-          </div>
-          <div className="row" style={{ marginTop: 8 }}>
-            <div><label>Sur</label><select name="treasury_account_id" required>{tOpts}</select></div>
-            <div><label>Référence</label><input name="reference" /></div>
-          </div>
-          <button className="btn" style={{ marginTop: 10 }}>Encaisser</button>
-        </form>
-
-        <form action={recordPayment} className="card">
-          <h3 style={{ marginTop: 0 }}>Payer une facture fournisseur</h3>
-          <input type="hidden" name="kind" value="reglement_fournisseur" />
-          <input type="hidden" name="back" value={back} />
-          <div className="field">
-            <label>Facture</label>
-            <select name="supplier_invoice_id" required defaultValue="">
-              <option value="" disabled>— Choisir —</option>
-              {(openSup ?? []).map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.supplier_name} {i.reference} · reste {money(Number(i.total) - Number(i.amount_paid), i.currency)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="row">
-            <div><label>Montant (devise de la facture)</label><input name="amount" inputMode="decimal" required /></div>
-            <div><label>Date</label><input type="date" name="payment_date" defaultValue={today()} /></div>
-          </div>
-          <div className="row" style={{ marginTop: 8 }}>
-            <div><label>Depuis</label><select name="treasury_account_id" required>{tOpts}</select></div>
-            <div><label>Référence</label><input name="reference" /></div>
-          </div>
-          <button className="btn" style={{ marginTop: 10 }}>Payer</button>
-        </form>
-      </div>
-
-      <h2>Mouvements & rapprochement</h2>
-      <form className="card row no-print" method="get">
-        <div><label>Du</label><input type="date" name="du" defaultValue={from} /></div>
-        <div><label>Au</label><input type="date" name="au" defaultValue={to} /></div>
-        <div>
-          <label>Compte</label>
+      <form className="filters toolbar no-print" method="get">
+        <label>Du<input type="date" name="du" defaultValue={from} /></label>
+        <label>Au<input type="date" name="au" defaultValue={to} /></label>
+        <label>
+          Compte
           <select name="compte" defaultValue={sp.compte ?? ""}>
             <option value="">Tous</option>
             {treasuries.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
-        </div>
-        <div className="shrink" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input type="checkbox" id="nr" name="nr" value="1" defaultChecked={!!sp.nr} style={{ width: "auto" }} />
-          <label htmlFor="nr" style={{ margin: 0 }}>Non rapprochés seulement</label>
-        </div>
-        <button className="btn shrink">Filtrer</button>
+        </label>
+        <label className="check"><input type="checkbox" name="nr" value="1" defaultChecked={!!sp.nr} /> Non rapprochés</label>
+        <button className="btn ghost">Filtrer</button>
       </form>
-      <div className="table-wrap">
-        <table>
-          <thead><tr><th>Date</th><th>Type</th><th>Libellé</th><th>Réf.</th><th>Compte</th><th className="num">Entrée</th><th className="num">Sortie</th><th>Rapproché</th></tr></thead>
-          <tbody>
-            {(payments ?? []).map((p) => {
-              const inflow = p.kind === "reglement_client" || p.kind === "recette";
-              return (
-                <tr key={p.id}>
-                  <td>{dateFr(p.payment_date)}</td><td>{KIND[p.kind]}</td><td>{p.label}</td><td>{p.reference}</td>
-                  <td>{rel(p.treasury_accounts)?.name}</td>
-                  <td className="num">{inflow ? money(p.amount, p.currency) : ""}</td>
-                  <td className="num">{!inflow ? money(p.amount, p.currency) : ""}</td>
-                  <td>
-                    <form action={toggleReconciled} style={{ display: "inline" }}>
-                      <input type="hidden" name="payment_id" value={p.id} />
-                      <input type="hidden" name="value" value={p.reconciled ? "0" : "1"} />
-                      <input type="hidden" name="back" value={back} />
-                      <button className={`btn sm ${p.reconciled ? "" : "ghost"}`}>{p.reconciled ? "✓ Rapproché" : "Rapprocher"}</button>
-                    </form>
-                  </td>
-                </tr>
-              );
-            })}
-            {(payments ?? []).length === 0 && <tr><td colSpan={8} className="muted">Aucun mouvement sur la période.</td></tr>}
-          </tbody>
-        </table>
-      </div>
 
-      <details className="card" style={{ marginTop: 16 }}>
-        <summary><strong>Ajouter une caisse ou un compte bancaire</strong></summary>
-        <form action={saveTreasuryAccount} className="row" style={{ marginTop: 10 }}>
-          <div><label>Nom</label><input name="name" placeholder="ex. Rawbank USD" required /></div>
-          <div><label>Type</label><select name="kind"><option value="banque">Banque</option><option value="caisse">Caisse</option></select></div>
-          <div><label>Devise</label><select name="currency"><option>USD</option><option>CDF</option></select></div>
-          <div><label>Compte SYSCOHADA</label><AccountSelect name="account_code" accounts={accounts} sector={site.sector} classes={[5]} required /></div>
-          <button className="btn shrink">Ajouter</button>
-        </form>
-        <p className="small muted">Utilisez un sous-compte distinct par banque pour obtenir des soldes séparés (créez-le dans le plan comptable si besoin).</p>
-      </details>
+      <Panel title="Mouvements & rapprochement">
+        {(payments ?? []).length === 0 ? <Empty>Aucun mouvement sur la période.</Empty> : (
+          <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Libellé</th><th>Réf.</th><th>Compte</th><th className="num">Entrée</th><th className="num">Sortie</th><th className="t-right">Rapprochement</th></tr></thead>
+            <tbody>
+              {(payments ?? []).map((p) => {
+                const inflow = p.kind === "reglement_client" || p.kind === "recette";
+                return (
+                  <tr key={p.id}>
+                    <td className="mono">{dateFr(p.payment_date)}</td><td className="xs">{KIND[p.kind]}</td><td>{p.label}</td><td className="mono xs">{p.reference}</td>
+                    <td>{rel(p.treasury_accounts)?.name}</td>
+                    <td className="num t-success">{inflow ? money(p.amount, p.currency) : ""}</td>
+                    <td className="num">{!inflow ? money(p.amount, p.currency) : ""}</td>
+                    <td>
+                      <div className="row-actions">
+                        <form action={toggleReconciled}>
+                          <input type="hidden" name="payment_id" value={p.id} />
+                          <input type="hidden" name="value" value={p.reconciled ? "0" : "1"} />
+                          <input type="hidden" name="back" value={back} />
+                          <button className={`btn sm ${p.reconciled ? "secondary" : "ghost"}`}>{p.reconciled ? "✓ Rapproché" : "Rapprocher"}</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Panel>
     </>
   );
 }

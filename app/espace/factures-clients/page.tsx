@@ -1,12 +1,14 @@
 import Link from "next/link";
 import Flash from "@/components/Flash";
+import Icon from "@/components/Icon";
+import { PageHeader, Panel, Empty, Seg, Status } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveSite } from "@/lib/session";
-import { money, dateFr, today, INVOICE_STATUS, rel } from "@/lib/format";
+import { money, dateFr, today, rel } from "@/lib/format";
 
 export const metadata = { title: "Factures clients" };
 
-const badge: Record<string, string> = { emise: "", partielle: "warn", payee: "ok", annulee: "err" };
+const TABS: [string, string][] = [["", "Toutes"], ["ouvertes", "À encaisser"], ["payee", "Réglées"], ["annulee", "Annulées"]];
 
 export default async function CustomerInvoicesPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const sp = await searchParams;
@@ -26,43 +28,46 @@ export default async function CustomerInvoicesPage({ searchParams }: { searchPar
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Factures clients</h1>
-          <p className="muted">Reste à encaisser : {money(due("USD"), "USD")} · {money(due("CDF"), "CDF")}</p>
-        </div>
-        <Link href="/espace/factures-clients/nouvelle" className="btn">Nouvelle facture</Link>
-      </div>
+      <PageHeader
+        title="Factures clients"
+        subtitle={<>L&apos;émission passe automatiquement l&apos;écriture de vente (411 / 70x / 4431). Reste à encaisser : <span className="num fw-500">{money(due("USD"), "USD")}</span> · <span className="num fw-500">{money(due("CDF"), "CDF")}</span></>}
+        actions={<Link href="/espace/factures-clients/nouvelle" className="btn"><Icon name="plus" /> Nouvelle facture</Link>}
+      />
       <Flash ok={sp.ok} err={sp.err} />
-      <div className="tabs">
-        {[["", "Toutes"], ["ouvertes", "À encaisser"], ["payee", "Réglées"], ["annulee", "Annulées"]].map(([k, v]) => (
-          <Link key={k} href={k ? `?statut=${k}` : "?"} className={(sp.statut ?? "") === k ? "active" : ""}>{v}</Link>
-        ))}
-      </div>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr><th>N°</th><th>Client</th><th>Date</th><th>Échéance</th><th className="num">Total</th><th className="num">Reste dû</th><th>Statut</th></tr>
-          </thead>
-          <tbody>
-            {(invoices ?? []).map((i) => {
-              const late = ["emise", "partielle"].includes(i.status) && i.due_date < t;
-              return (
-                <tr key={i.id}>
-                  <td><Link href={`/espace/factures-clients/${i.id}`}>{i.number}</Link></td>
-                  <td>{rel(i.customers)?.name}</td>
-                  <td>{dateFr(i.issue_date)}</td>
-                  <td>{dateFr(i.due_date)} {late && <span className="badge err">En retard</span>}</td>
-                  <td className="num">{money(i.total, i.currency)}</td>
-                  <td className="num">{i.status === "annulee" ? "—" : money(Number(i.total) - Number(i.amount_paid), i.currency)}</td>
-                  <td><span className={`badge ${badge[i.status]}`}>{INVOICE_STATUS[i.status]}</span></td>
-                </tr>
-              );
-            })}
-            {(invoices ?? []).length === 0 && <tr><td colSpan={7} className="muted">Aucune facture.</td></tr>}
-          </tbody>
-        </table>
-      </div>
+      <Seg items={TABS.map(([k, v]) => ({ href: k ? `?statut=${k}` : "?", label: v, active: (sp.statut ?? "") === k }))} />
+      <Panel>
+        {(invoices ?? []).length === 0 ? <Empty>Aucune facture.</Empty> : (
+          <table>
+            <thead>
+              <tr><th>N°</th><th>Date</th><th>Client</th><th>Échéance</th><th className="num">Total TTC</th><th className="num">Reçu</th><th className="num">Reste dû</th><th>Statut</th><th className="t-right">Actions</th></tr>
+            </thead>
+            <tbody>
+              {(invoices ?? []).map((i) => {
+                const late = ["emise", "partielle"].includes(i.status) && i.due_date < t;
+                const rest = Number(i.total) - Number(i.amount_paid);
+                return (
+                  <tr key={i.id}>
+                    <td className="mono xs"><Link href={`/espace/factures-clients/${i.id}`}>{i.number}</Link></td>
+                    <td className="mono">{dateFr(i.issue_date)}</td>
+                    <td>{rel(i.customers)?.name ?? "—"}</td>
+                    <td className="nowrap"><span className="num">{dateFr(i.due_date)}</span> {late && <span className="badge err">En retard</span>}</td>
+                    <td className="num">{money(i.total, i.currency)}</td>
+                    <td className="num">{Number(i.amount_paid) > 0 ? money(i.amount_paid, i.currency) : "—"}</td>
+                    <td className="num fw-600">{i.status === "annulee" || rest <= 0 ? "—" : money(rest, i.currency)}</td>
+                    <td><Status status={i.status} /></td>
+                    <td>
+                      <div className="row-actions">
+                        {["emise", "partielle"].includes(i.status) && <Link href={`/espace/factures-clients/${i.id}#reglement`} className="btn ghost sm">Encaisser</Link>}
+                        <Link href={`/espace/factures-clients/${i.id}`} className="btn plain sm icon" title="Voir / imprimer"><Icon name="printer" /></Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Panel>
     </>
   );
 }

@@ -1,4 +1,5 @@
 import PrintButton from "@/components/PrintButton";
+import { PageHeader, Panel, Empty } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getOpenSites } from "@/lib/session";
 import { money, dateFr, monthBounds, isDate, SECTORS } from "@/lib/format";
@@ -24,48 +25,61 @@ export default async function SitesSummaryPage({ searchParams }: { searchParams:
     { revenue: 0, expenses: 0, receivables: 0, payables: 0, cash: 0 },
   );
   const sector = new Map(open.map((s) => [s.id, s.sector]));
+  const res = total.revenue - total.expenses;
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Synthèse par site</h1>
-          <p className="muted">Sites accessibles · activité du {dateFr(from)} au {dateFr(to)} · créances, dettes et trésorerie au {dateFr(to)} · USD</p>
-        </div>
-        <PrintButton />
-      </div>
-      <form className="card row no-print" method="get">
-        <div><label>Du</label><input type="date" name="du" defaultValue={from} /></div>
-        <div><label>Au</label><input type="date" name="au" defaultValue={to} /></div>
-        <button className="btn shrink">Afficher</button>
+      <PageHeader
+        title="Synthèse par site"
+        subtitle={<>Activité du {dateFr(from)} au {dateFr(to)} · créances, dettes et trésorerie au {dateFr(to)} · USD</>}
+        actions={<PrintButton />}
+      />
+      <form className="filters toolbar no-print" method="get">
+        <label>Du<input type="date" name="du" defaultValue={from} /></label>
+        <label>Au<input type="date" name="au" defaultValue={to} /></label>
+        <button className="btn ghost">Afficher</button>
+        <span className="hint">Montants convertis au taux de chaque pièce.</span>
       </form>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Site</th><th>Secteur</th><th className="num">Chiffre d'affaires</th><th className="num">Charges</th><th className="num">Résultat</th><th className="num">Créances</th><th className="num">Dettes fournisseurs</th><th className="num">Trésorerie</th></tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.site_id}>
-                <td><strong>{r.site_code}</strong> – {r.site_name}</td>
-                <td>{SECTORS[sector.get(r.site_id) ?? ""]}</td>
-                <td className="num">{money(r.revenue)}</td><td className="num">{money(r.expenses)}</td>
-                <td className="num">{money(Number(r.revenue) - Number(r.expenses))}</td>
-                <td className="num">{money(r.receivables)}</td><td className="num">{money(r.payables)}</td><td className="num">{money(r.cash)}</td>
-              </tr>
-            ))}
-            {rows.length > 1 && (
-              <tr className="total">
-                <td colSpan={2}>Consolidé</td>
-                <td className="num">{money(total.revenue)}</td><td className="num">{money(total.expenses)}</td>
-                <td className="num">{money(total.revenue - total.expenses)}</td>
-                <td className="num">{money(total.receivables)}</td><td className="num">{money(total.payables)}</td><td className="num">{money(total.cash)}</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+
+      <div className="stats">
+        <div className="stat"><div className="label">Chiffre d&apos;affaires</div><div className="value">{money(total.revenue)}</div></div>
+        <div className="stat"><div className="label">Charges</div><div className="value">{money(total.expenses)}</div></div>
+        <div className="stat"><div className="label">Résultat</div><div className={`value${res < 0 ? " t-danger" : ""}`}>{money(res)}</div></div>
+        <div className="stat"><div className="label">Trésorerie</div><div className="value">{money(total.cash)}</div></div>
       </div>
-      <p className="small muted">Seuls les sites que vous avez ouverts avec leur code apparaissent (tous les sites pour un administrateur).</p>
+
+      <Panel title="Détail par site">
+        {rows.length === 0 ? <Empty>Aucun site ouvert.</Empty> : (
+          <table>
+            <thead>
+              <tr><th>Site</th><th>Secteur</th><th className="num">Produits</th><th className="num">Charges</th><th className="num">Résultat</th><th className="num">Créances (411)</th><th className="num">Dettes (401)</th><th className="num">Trésorerie</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const rr = Number(r.revenue) - Number(r.expenses);
+                return (
+                  <tr key={r.site_id}>
+                    <td><span className="num t-muted">{r.site_code}</span> {r.site_name}</td>
+                    <td className="t-muted">{SECTORS[sector.get(r.site_id) ?? ""]}</td>
+                    <td className="num">{money(r.revenue)}</td><td className="num">{money(r.expenses)}</td>
+                    <td className={`num fw-500${rr < 0 ? " t-danger" : ""}`}>{money(rr)}</td>
+                    <td className="num">{money(r.receivables)}</td><td className="num">{money(r.payables)}</td><td className="num">{money(r.cash)}</td>
+                  </tr>
+                );
+              })}
+              {rows.length > 1 && (
+                <tr className="total">
+                  <td colSpan={2}>Consolidé</td>
+                  <td className="num">{money(total.revenue)}</td><td className="num">{money(total.expenses)}</td>
+                  <td className="num">{money(res)}</td>
+                  <td className="num">{money(total.receivables)}</td><td className="num">{money(total.payables)}</td><td className="num">{money(total.cash)}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </Panel>
+      <p className="note">Seuls les sites que vous avez ouverts avec leur code apparaissent (tous les sites pour un administrateur).</p>
     </>
   );
 }
