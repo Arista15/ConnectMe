@@ -9,10 +9,13 @@ const n = (s: string) => Number(String(s).replace(/\s/g, "").replace(",", ".")) 
 
 export default function InvoiceForm({
   accounts, sector, customers, defaultAccount, vatRate, rate, today, dueDefault, action,
+  optionalCustomer = false, dueLabel = "Échéance", submitLabel = "Émettre et comptabiliser",
+  footnote = "Écriture générée au journal des ventes : 411 au débit (TTC), produits et 4431 au crédit.",
 }: {
   accounts: Account[]; sector: string; customers: { id: string; name: string }[];
   defaultAccount: string; vatRate: number; rate: number; today: string; dueDefault: string;
   action: (fd: FormData) => void;
+  optionalCustomer?: boolean; dueLabel?: string; submitLabel?: string; footnote?: string;
 }) {
   const blank = (): Line => ({ description: "", quantity: "1", unit_price: "", account_code: defaultAccount });
   const [lines, setLines] = useState<Line[]>([blank()]);
@@ -32,13 +35,13 @@ export default function InvoiceForm({
       <div className="form-grid g4">
         <div className="span-2">
           <label htmlFor="customer_id">Client</label>
-          <select id="customer_id" name="customer_id" required defaultValue="">
-            <option value="" disabled>— Choisir —</option>
+          <select id="customer_id" name="customer_id" required={!optionalCustomer} defaultValue="">
+            <option value="" disabled={!optionalCustomer}>{optionalCustomer ? "— Aucun —" : "— Choisir —"}</option>
             {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div><label htmlFor="issue_date">Date</label><input id="issue_date" type="date" name="issue_date" defaultValue={today} required /></div>
-        <div><label htmlFor="due_date">Échéance</label><input id="due_date" type="date" name="due_date" defaultValue={dueDefault} required /></div>
+        <div><label htmlFor="due_date">{dueLabel}</label><input id="due_date" type="date" name="due_date" defaultValue={dueDefault} required={!optionalCustomer} /></div>
         <div>
           <label htmlFor="currency">Devise</label>
           <select id="currency" name="currency" value={currency} onChange={(e) => setCurrency(e.target.value)}>
@@ -78,8 +81,8 @@ export default function InvoiceForm({
         description: l.description, quantity: n(l.quantity), unit_price: n(l.unit_price), account_code: l.account_code,
       })))} />
       <div className="form-foot">
-        <span className="grow note" style={{ margin: 0 }}>Écriture générée au journal des ventes : 411 au débit (TTC), produits et 4431 au crédit.</span>
-        <button className="btn" disabled={t.sub <= 0}>Émettre et comptabiliser</button>
+        <span className="grow note" style={{ margin: 0 }}>{footnote}</span>
+        <button className="btn" disabled={t.sub <= 0}>{submitLabel}</button>
       </div>
     </form>
   );

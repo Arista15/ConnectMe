@@ -9,17 +9,20 @@ type Template = { id: number; name: string; journal_code: string; sector: string
   lines: { account_code: string; side: "D" | "C"; label: string }[] };
 
 const empty = (): Line => ({ account_code: "", label: "", debit: "", credit: "" });
+
+export type EntryInitial = { journal: string; date: string; reference: string; label: string; currency: string; lines: Line[] };
 const n = (s: string) => Number(String(s).replace(/\s/g, "").replace(",", ".")) || 0;
 
 export default function EntryForm({
-  accounts, sector, templates, action, today,
+  accounts, sector, templates, action, today, initial, entryId, back,
 }: {
   accounts: Account[]; sector: string; templates: Template[];
   action: (fd: FormData) => void; today: string;
+  initial?: EntryInitial; entryId?: string; back?: string;
 }) {
-  const [journal, setJournal] = useState("OD");
-  const [label, setLabel] = useState("");
-  const [lines, setLines] = useState<Line[]>([empty(), empty()]);
+  const [journal, setJournal] = useState(initial?.journal ?? "OD");
+  const [label, setLabel] = useState(initial?.label ?? "");
+  const [lines, setLines] = useState<Line[]>(initial?.lines.length ? initial.lines : [empty(), empty()]);
 
   const totals = useMemo(() => {
     const d = lines.reduce((s, l) => s + n(l.debit), 0);
@@ -41,6 +44,8 @@ export default function EntryForm({
 
   return (
     <form action={action}>
+      {entryId && <input type="hidden" name="entry_id" value={entryId} />}
+      {back && <input type="hidden" name="back" value={back} />}
       <div className="form-grid g4">
         <div className="span-2">
           <label>Écriture type</label>
@@ -64,15 +69,15 @@ export default function EntryForm({
         </div>
         <div>
           <label htmlFor="entry_date">Date</label>
-          <input id="entry_date" name="entry_date" type="date" defaultValue={today} required />
+          <input id="entry_date" name="entry_date" type="date" defaultValue={initial?.date ?? today} required />
         </div>
         <div>
           <label htmlFor="reference">Pièce justificative</label>
-          <input id="reference" name="reference" placeholder="N° reçu, facture, relevé…" required />
+          <input id="reference" name="reference" defaultValue={initial?.reference} placeholder="N° reçu, facture, relevé…" required />
         </div>
         <div>
           <label htmlFor="currency">Devise</label>
-          <select id="currency" name="currency" defaultValue="USD">
+          <select id="currency" name="currency" defaultValue={initial?.currency ?? "USD"}>
             <option value="USD">USD</option>
             <option value="CDF">CDF</option>
           </select>

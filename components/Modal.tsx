@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Icon, { type IconName } from "./Icon";
 
 /**
@@ -9,17 +9,21 @@ import Icon, { type IconName } from "./Icon";
  * sauf ceux marqués data-keep-open (ex. analyse d'un reçu).
  */
 export default function Modal({
-  label, title, children, variant = "", size = "", icon, triggerTitle,
+  label, title, children, variant = "", size = "", icon, triggerTitle, defaultOpen = false, hideTrigger = false,
 }: {
-  label: React.ReactNode; title: React.ReactNode; children: React.ReactNode;
+  label?: React.ReactNode; title: React.ReactNode; children: React.ReactNode;
   variant?: string; size?: "" | "lg" | "xl"; icon?: IconName; triggerTitle?: string;
+  defaultOpen?: boolean; hideTrigger?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => { if (defaultOpen) ref.current?.showModal(); }, [defaultOpen]);
   return (
     <>
-      <button type="button" className={`btn ${variant}`} title={triggerTitle} onClick={() => ref.current?.showModal()}>
-        {icon && <Icon name={icon} />}{label}
-      </button>
+      {!hideTrigger && (
+        <button type="button" className={`btn ${variant}`} title={triggerTitle} onClick={() => ref.current?.showModal()}>
+          {icon && <Icon name={icon} />}{label}
+        </button>
+      )}
       <dialog
         ref={ref}
         className={`modal ${size}`}

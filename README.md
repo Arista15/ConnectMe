@@ -87,3 +87,10 @@ Non incluse : exportez les écritures de l'ancienne base (CSV) puis importez-les
 #� �K�B�S�-�C�O�M�P�T�A�B�L�E�
 �
 �
+
+## Mise à jour 0006 — parité avec kbs-comptable.com
+
+Exécuter une fois `supabase/migrations/0006_parite_kbs_reference.sql` dans l'éditeur SQL de Supabase
+(déjà inclus à la fin de `INSTALLER_SUPABASE.sql` pour une nouvelle installation). Il ajoute :
+devis clients, acomptes clients (4191) et leur imputation, comptes par secteur, mentions légales des
+sites sur les factures (adresse, RCCM, Id. nat., NIF), modification/suppression des écritures manuelles.

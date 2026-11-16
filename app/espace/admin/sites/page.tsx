@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/session";
 import { SECTORS, dateTimeFr, rel } from "@/lib/format";
 import { createSite, updateSite, setSiteCode } from "../actions";
+import { saveSiteMentions } from "../../parite-actions";
 
 export const metadata = { title: "Sites & codes d'accès" };
 
@@ -12,10 +13,14 @@ export default async function AdminSitesPage({ searchParams }: { searchParams: P
   const sp = await searchParams;
   await requireAdmin();
   const supabase = await createClient();
-  const [{ data: sites }, { data: rates }] = await Promise.all([
-    supabase.from("sites").select("id, code, name, city, sector, usd_cdf_rate, vat_rate").order("code"),
+  const [{ data: sites }, { data: rates }, { data: log }] = await Promise.all([
+    supabase.from("sites").select("id, code, name, city, sector, usd_cdf_rate, vat_rate, address, rccm, id_nat, nif").order("code"),
     supabase.from("site_rates").select("site_id, rate, set_at, profiles(full_name, email)").order("set_at", { ascending: false }).limit(60),
+    supabase.from("audit_log").select("id, at, action, site_id, profiles(full_name, email)")
+      .in("action", ["site.ouvert", "site.code_refuse", "site.code_change"]).order("at", { ascending: false }).limit(200),
   ]);
+  const EVENTS: Record<string, string> = { "site.ouvert": "Ouverture d'un site protégé", "site.code_refuse": "Code refusé", "site.code_change": "Code d'accès changé" };
+  const siteName = (id: string | null) => { const x = (sites ?? []).find((s) => s.id === id); return x ? `${x.code} — ${x.name}` : ""; };
   const sectorOpts = Object.entries(SECTORS).map(([k, v]) => <option key={k} value={k}>{v}</option>);
 
   return (
@@ -86,7 +91,46 @@ export default async function AdminSitesPage({ searchParams }: { searchParams: P
             </Panel>
           );
         })}
+            </div>
+
+      <h2>Mentions des factures et devis</h2>
+      <p className="small t-muted" style={{ marginTop: -8, marginBottom: 12 }}>Adresse, RCCM, Id. nationale et N° impôt (NIF) imprimés sous le logo de chaque facture et devis du site.</p>
+      <div className="cols-2">
+        {(sites ?? []).map((s) => (
+          <Panel key={s.id} code={s.code} title={s.name}>
+            <form action={saveSiteMentions} className="panel-body">
+              <input type="hidden" name="site_id" value={s.id} />
+              <div className="form-grid">
+                <div className="span-2"><label>Adresse</label><input name="address" defaultValue={s.address ?? ""} placeholder="N°, avenue, quartier, commune, ville" /></div>
+                <div><label>RCCM</label><input name="rccm" className="mono" defaultValue={s.rccm ?? ""} /></div>
+                <div><label>Id. nationale</label><input name="id_nat" className="mono" defaultValue={s.id_nat ?? ""} /></div>
+                <div className="span-2"><label>N° impôt (NIF)</label><input name="nif" className="mono" defaultValue={s.nif ?? ""} /></div>
+              </div>
+              <div style={{ marginTop: 10 }}><button className="btn sm">Enregistrer</button></div>
+            </form>
+          </Panel>
+        ))}
       </div>
+
+      <h2>Historique des connexions</h2>
+      <Panel>
+        {(log ?? []).length === 0 ? <div className="empty">Aucun événement enregistré.</div> : (
+          <table>
+            <thead><tr><th>Date et heure</th><th>Utilisateur</th><th>Événement</th><th>Site</th></tr></thead>
+            <tbody>
+              {(log ?? []).map((e) => (
+                <tr key={e.id}>
+                  <td className="mono">{dateTimeFr(e.at)}</td>
+                  <td>{rel(e.profiles)?.full_name || rel(e.profiles)?.email || "—"}</td>
+                  <td className={e.action === "site.code_refuse" ? "fw-600 t-danger" : undefined}>{EVENTS[e.action] ?? e.action}</td>
+                  <td>{siteName(e.site_id)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Panel>
+      <p className="note">200 derniers événements d&apos;accès aux sites.</p>
     </>
   );
 }

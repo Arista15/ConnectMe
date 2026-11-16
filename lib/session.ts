@@ -59,3 +59,10 @@ export async function requireAdmin() {
   if (profile.role !== "admin") redirect("/espace?err=" + encodeURIComponent("Réservé aux administrateurs."));
   return profile;
 }
+
+/** Site précis (module site) : doit faire partie des sites ouverts, sinon retour à la connexion au site. */
+export async function getOpenSiteById(id: string): Promise<Site> {
+  const site = (await getOpenSites()).find((s) => s.id === id);
+  if (!site) redirect("/connexion-site?err=" + encodeURIComponent("Ce site n'est pas ouvert ou vous n'y avez pas accès."));
+  return site;
+}

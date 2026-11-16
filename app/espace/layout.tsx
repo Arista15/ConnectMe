@@ -6,12 +6,17 @@ import { signOut } from "../auth/actions";
 import { updateRate } from "./actions";
 import NavLink from "@/components/NavLink";
 import Icon from "@/components/Icon";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile();
   const site = await getActiveSite();
   const open = await getOpenSites();
   const admin = profile.role === "admin";
+  const supabase = await createClient();
+  const { data: visible } = await supabase.from("sites").select("id, code, name").order("code");
+  const allSites = visible ?? [];
+  const openIds = new Set(open.map((s) => s.id));
   const who = profile.full_name || profile.email;
 
   return (
@@ -29,28 +34,36 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
         <nav>
           <NavLink href="/espace" icon="dashboard" exact>Tableau de bord</NavLink>
-          <div className="section">Saisie</div>
+          <NavLink href="/espace/guide-secteurs" icon="cap">Guide secteurs</NavLink>
+          <NavLink href="/espace/comptes-secteurs" icon="cap">Comptes par secteur</NavLink>
           <NavLink href="/espace/journal" icon="book">Journal</NavLink>
-          <NavLink href="/espace/factures-clients" icon="file">Factures clients</NavLink>
-          <NavLink href="/espace/factures-fournisseurs" icon="cart">Factures fournisseurs</NavLink>
-          <NavLink href="/espace/depenses" icon="receipt">Dépenses &amp; recettes</NavLink>
-          <NavLink href="/espace/tresorerie" icon="wallet">Caisse &amp; banque</NavLink>
-          <NavLink href="/espace/tiers" icon="users">Clients &amp; fournisseurs</NavLink>
-          <div className="section">États</div>
           <NavLink href="/espace/grand-livre" icon="library">Grand livre</NavLink>
           <NavLink href="/espace/etats" icon="scale">États financiers</NavLink>
-          <NavLink href="/espace/sites" icon="building">Synthèse par site</NavLink>
-          <NavLink href="/rapport" icon="printer">Rapport mensuel (PDF)</NavLink>
-          {admin && (
+          <NavLink href="/espace/factures-clients" icon="file">Factures &amp; devis</NavLink>
+          <NavLink href="/espace/factures-fournisseurs" icon="cart">Factures fournisseurs</NavLink>
+          <NavLink href="/espace/depenses" icon="receipt">Dépenses</NavLink>
+          <NavLink href="/espace/tresorerie" icon="wallet">Caisse &amp; banque</NavLink>
+          <NavLink href="/espace/tiers" icon="users">Clients &amp; fournisseurs</NavLink>
+          <NavLink href="/espace/clients" icon="wallet">Soldes clients</NavLink>
+          <NavLink href="/espace/fournisseurs" icon="truck">Soldes fournisseurs</NavLink>
+          {admin ? (
             <>
-              <div className="section">Administration</div>
               <NavLink href="/espace/admin/comptables" icon="key">Comptables</NavLink>
-              <NavLink href="/espace/admin/sites" icon="settings">Sites &amp; codes</NavLink>
-              <NavLink href="/espace/admin/audit" icon="history">Historique d&apos;audit</NavLink>
+              <NavLink href="/espace/admin/audit" icon="history">Historique écritures</NavLink>
+              <NavLink href="/espace/admin/sites" icon="settings">Gestion des sites</NavLink>
+            </>
+          ) : (
+            <NavLink href="/connexion-site" icon="key">Accès aux sites</NavLink>
+          )}
+          {allSites.length > 0 && (
+            <>
+              <div className="section">Sites</div>
+              {allSites.map((s) => openIds.has(s.id)
+                ? <NavLink key={s.id} href={`/espace/site/${s.id}`} icon="building">{s.code} — {s.name}</NavLink>
+                : <NavLink key={s.id} href="/connexion-site" icon="lock">{s.code} — {s.name}</NavLink>)}
+              <NavLink href="/espace/sites" icon="scale">Synthèse consolidée</NavLink>
             </>
           )}
-          <div className="section">Aide</div>
-          <NavLink href="/guide-comptables" icon="cap">Guide des comptables</NavLink>
         </nav>
         <div className="sidebar-foot">
           <div className="who">{who}</div>
