@@ -761,25 +761,81 @@ dialog.modal[open] { animation: modal-in 0.18s var(--ease); }
   .lp-fade, .lp-line, .lp-ok, .lp-toast, .lp-reveal { opacity: 1 !important; transform: none !important; }
 }
 
-/* Facture / devis imprimable */
-.invoice-doc { max-width: 48rem; margin: 0 auto 1.5rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; box-shadow: var(--shadow-sm); }
-.inv-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
-.inv-from { display: flex; align-items: flex-start; gap: 1rem; }
-.inv-from img { width: 5rem; height: 5rem; flex-shrink: 0; object-fit: contain; }
-.inv-company { font-family: var(--font-serif); font-size: 1.5rem; }
-.inv-mentions { margin-top: 0.5rem; font-size: 0.75rem; line-height: 1.5; }
-.inv-kind { font-family: var(--font-serif); font-size: 1.875rem; text-transform: uppercase; letter-spacing: 0.02em; }
-.inv-client { padding: 1.5rem 0; font-size: 0.875rem; }
-.inv-totals { margin: 1.5rem 0 0 auto; width: 100%; max-width: 24rem; font-size: 0.875rem; }
-.inv-totals > div { display: flex; justify-content: space-between; gap: 1rem; padding: 2px 0; }
-.inv-totals .grand { border-top: 1px solid var(--border); padding-top: 4px; margin-top: 2px; font-size: 1rem; font-weight: 600; }
-.inv-totals .grand.sm { font-size: 0.875rem; }
-.inv-bank { margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 0.75rem; font-size: 10px; line-height: 1.4; }
-.inv-bank dl { display: grid; grid-template-columns: auto auto 1fr; gap: 2px 8px; margin: 0; }
-.inv-bank dd { margin: 0; }
-.doc-bar { display: flex; justify-content: space-between; gap: 0.5rem; max-width: 48rem; margin: 0 auto 1rem; flex-wrap: wrap; }
-@media (max-width: 640px) { .invoice-doc { padding: 1.25rem; } .inv-from img { width: 3.5rem; height: 3.5rem; } .inv-kind { font-size: 1.4rem; } }
-@media print { .invoice-doc { border: 0; box-shadow: none; padding: 0; max-width: none; } .doc-bar { display: none; } }
+/* =========================================================================
+   Documents imprimés : en-tête officiel + facture / devis A4
+   ========================================================================= */
+.letterhead {
+  display: grid; grid-template-columns: 1fr auto; gap: 0.75rem 1.5rem; align-items: start;
+  padding-bottom: 0.9rem; margin-bottom: 1.25rem; border-bottom: 3px solid var(--sidebar); position: relative;
+}
+.letterhead::after { content: ""; position: absolute; left: 0; bottom: -3px; width: 7rem; height: 3px; background: var(--brass); }
+.lh-brand { display: flex; align-items: center; gap: 0.9rem; }
+.lh-brand img { width: 4.5rem; height: 4.5rem; object-fit: contain; flex-shrink: 0; }
+.lh-name { font-family: var(--font-serif); font-size: 1.65rem; font-weight: 600; line-height: 1.1; color: var(--sidebar); letter-spacing: 0.01em; }
+.lh-legal { font-size: 0.8rem; font-weight: 500; color: var(--foreground); margin-top: 1px; }
+.lh-activities { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: oklch(55% 0.12 80); margin-top: 3px; font-weight: 500; }
+.lh-doc { text-align: right; }
+.lh-title { font-family: var(--font-serif); font-size: 2rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sidebar); }
+.lh-meta { margin-top: 0.6rem; font-size: 0.78rem; display: grid; gap: 2px; }
+.lh-meta > div { display: flex; justify-content: flex-end; gap: 0.6rem; }
+.lh-meta span { color: var(--muted-foreground); }
+.lh-ids { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.2rem 1.1rem; font-size: 0.72rem; color: var(--foreground); }
+.lh-ids b { font-weight: 600; color: var(--muted-foreground); margin-right: 0.25rem; text-transform: uppercase; font-size: 0.64rem; letter-spacing: 0.05em; }
+.print-letterhead { display: none; }
+
+.invoice-doc { position: relative; max-width: 52rem; margin: 0 auto 1.5rem; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem 2.75rem 1.75rem; box-shadow: 0 10px 30px rgb(15 30 60 / 0.08); overflow: hidden; }
+.inv-stamp { position: absolute; top: 9.5rem; right: 2.5rem; transform: rotate(-14deg); border: 3px solid currentColor; border-radius: 6px; padding: 0.2rem 0.9rem; font-family: var(--font-serif); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.22; pointer-events: none; }
+.inv-stamp.paid { color: var(--success-foreground); }
+.inv-stamp.void { color: var(--destructive); }
+.inv-parties { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+.inv-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; font-size: 0.85rem; line-height: 1.55; }
+.inv-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-foreground); font-weight: 600; margin-bottom: 0.3rem; }
+.inv-client-name { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--sidebar); }
+.inv-sum { background: var(--sidebar); color: var(--sidebar-foreground); border-color: var(--sidebar); }
+.inv-sum .inv-label, .inv-sum .t-muted { color: color-mix(in oklab, var(--sidebar-foreground) 70%, transparent); }
+.inv-big { font-size: 1.6rem; font-weight: 600; color: #fff; margin: 0.15rem 0; }
+.inv-table { font-size: 0.85rem; border: 1px solid var(--border); }
+.inv-table th { background: var(--sidebar); color: var(--sidebar-foreground); border-bottom: 0; }
+.inv-table tbody tr:nth-child(even) td { background: color-mix(in oklab, var(--muted) 55%, transparent); }
+.inv-table tbody tr:hover td { background: inherit; }
+.inv-table td { border-bottom: 1px solid var(--border); }
+.inv-bottom { display: grid; grid-template-columns: 1fr minmax(16rem, 22rem); gap: 1.5rem; margin-top: 1.25rem; align-items: start; }
+.inv-notes { font-size: 0.82rem; }
+.inv-totals { font-size: 0.85rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.inv-totals > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.4rem 0.85rem; border-bottom: 1px solid var(--border); }
+.inv-totals > div:last-child { border-bottom: 0; }
+.inv-totals .grand { background: var(--sidebar); color: #fff; font-size: 1rem; font-weight: 600; }
+.inv-totals .due { background: var(--brass-soft); color: var(--brass-foreground); font-weight: 600; }
+.inv-foot { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.inv-bank dl { display: grid; grid-template-columns: auto 1fr; gap: 1px 0.75rem; margin: 0; font-size: 0.7rem; }
+.inv-bank dt { color: var(--muted-foreground); }
+.inv-bank dd { margin: 0; font-weight: 500; }
+.inv-sign-zone { height: 5rem; border: 1px dashed var(--input); border-radius: var(--radius); display: grid; place-items: end center; padding-bottom: 0.4rem; font-size: 0.68rem; color: var(--muted-foreground); }
+.inv-legal { margin-top: 1.25rem; padding-top: 0.6rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.64rem; color: var(--muted-foreground); }
+.doc-bar { display: flex; justify-content: space-between; gap: 0.5rem; max-width: 52rem; margin: 0 auto 1rem; flex-wrap: wrap; }
+
+@media (max-width: 720px) {
+  .invoice-doc { padding: 1.25rem; }
+  .letterhead { grid-template-columns: 1fr; }
+  .lh-doc { text-align: left; }
+  .lh-meta > div { justify-content: flex-start; }
+  .lh-brand img { width: 3.5rem; height: 3.5rem; }
+  .lh-name { font-size: 1.35rem; }
+  .lh-title { font-size: 1.5rem; }
+  .inv-parties, .inv-bottom, .inv-foot { grid-template-columns: 1fr; }
+  .inv-stamp { top: 1rem; right: 1rem; font-size: 1.1rem; }
+}
+
+@page { size: A4; margin: 12mm 12mm 14mm; }
+@media print {
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-letterhead { display: block; }
+  .content:has(.invoice-doc) .print-letterhead, .doc-page .print-letterhead { display: none; }
+  .invoice-doc { border: 0; box-shadow: none; padding: 0; max-width: none; margin: 0; }
+  .inv-stamp { opacity: 0.18; }
+  .inv-table tr, .inv-bottom, .inv-foot { break-inside: avoid; }
+  .doc-bar { display: none; }
+}
 
 /* ---------- Impression (rapport mensuel PDF, états) ---------- */
 @media print {

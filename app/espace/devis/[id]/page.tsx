@@ -64,7 +64,7 @@ export default async function QuotePage({ params, searchParams }: {
         site={siteInfo ?? { name: site.name, city: site.city, sector: site.sector }}
         client={c ? { name: c.name, address: c.address, tax_id: c.tax_id } : null}
         lines={lines.map((l: { description: string; quantity: number; unit_price: number; amount: number }) => ({ description: l.description, quantity: Number(l.quantity), unit_price: Number(l.unit_price), amount: Number(l.amount) }))}
-        currency={qt.currency} subtotal={Number(qt.subtotal)} vatRate={Number(qt.vat_rate)} vatAmount={Number(qt.vat_amount)} total={Number(qt.total)} notes={qt.notes}
+        currency={qt.currency} subtotal={Number(qt.subtotal)} vatRate={Number(qt.vat_rate)} vatAmount={Number(qt.vat_amount)} total={Number(qt.total)} notes={qt.notes} status={qt.status}
       />
     </>
   );

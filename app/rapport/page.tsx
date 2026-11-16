@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
+import Letterhead from "@/components/Letterhead";
 import { StatementTable, TrialBalanceTable } from "@/components/Statements";
 import { createClient } from "@/lib/supabase/server";
 import { resolveScope } from "@/lib/scope";
@@ -26,13 +27,14 @@ export default async function MonthlyReport({ searchParams }: { searchParams: Pr
       .in("site_id", siteIds).in("status", ["emise", "partielle"]).lt("due_date", to).order("due_date"),
   ]);
   const rows = (tb ?? []) as TBRow[];
+  const { data: headSite } = await supabase.from("sites").select("name, city, address, rccm, id_nat, nif").eq("id", siteIds[0]).maybeSingle();
   const is = incomeStatement(rows);
   const bs = balanceSheet(rows);
   const monthLabel = new Date(from + "T00:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const prev = monthBounds(new Date(Date.UTC(+month.slice(0, 4), +month.slice(5, 7) - 2, 1)).toISOString().slice(0, 7)).month;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: "1.5rem", background: "#fff" }}>
+    <div className="doc-page" style={{ maxWidth: 1000, margin: "0 auto", padding: "1.5rem", background: "#fff" }}>
       <div className="page-head no-print">
         <Link href="/espace/etats" className="btn ghost">← États financiers</Link>
         <form method="get" className="row" style={{ flex: "0 1 auto" }}>
@@ -44,16 +46,17 @@ export default async function MonthlyReport({ searchParams }: { searchParams: Pr
         <PrintButton label="Imprimer / enregistrer en PDF" />
       </div>
 
-      <div className="page-head">
-        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-          <img src="/kbs-logo.png" alt="" width={56} height={56} style={{ borderRadius: 6, objectFit: "contain" }} />
-          <div>
-            <h1 style={{ margin: 0 }}>Rapport mensuel – {monthLabel}</h1>
-            <p className="muted" style={{ margin: 0 }}>Kafaus Business Service SARL · {title}</p>
-          </div>
-        </div>
-        <p className="small muted right">Édité le {dateTimeFr(new Date().toISOString())}<br />par {profile.full_name || profile.email}<br />Montants en USD</p>
-      </div>
+      <Letterhead
+        site={headSite}
+        title="Rapport mensuel"
+        meta={<>
+          <div><span>Période</span><b>{monthLabel}</b></div>
+          <div><span>Périmètre</span><b>{title}</b></div>
+          <div><span>Édité le</span><b className="mono">{dateTimeFr(new Date().toISOString())}</b></div>
+          <div><span>Par</span><b>{profile.full_name || profile.email}</b></div>
+          <div><span>Devise</span><b>USD</b></div>
+        </>}
+      />
 
       <h2>1. Synthèse</h2>
       <div className="grid grid-4">

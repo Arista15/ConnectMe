@@ -7,6 +7,7 @@ import { updateRate } from "./actions";
 import NavLink from "@/components/NavLink";
 import Icon from "@/components/Icon";
 import { createClient } from "@/lib/supabase/server";
+import Letterhead from "@/components/Letterhead";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile();
@@ -15,6 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const admin = profile.role === "admin";
   const supabase = await createClient();
   const { data: visible } = await supabase.from("sites").select("id, code, name").order("code");
+  const { data: siteMentions } = await supabase.from("sites").select("name, city, address, rccm, id_nat, nif").eq("id", site.id).maybeSingle();
   const allSites = visible ?? [];
   const openIds = new Set(open.map((s) => s.id));
   const who = profile.full_name || profile.email;
@@ -119,7 +121,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </header>
-        <main className="content">{children}</main>
+        <main className="content">
+          <div className="print-letterhead"><Letterhead site={siteMentions ?? { name: site.name, city: site.city }} meta={<div><span>Site</span><b>{site.code} — {site.name}</b></div>} /></div>
+          {children}
+        </main>
       </div>
     </div>
   );

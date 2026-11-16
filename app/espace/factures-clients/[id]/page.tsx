@@ -108,7 +108,7 @@ export default async function InvoicePage({ params, searchParams }: {
         client={c ? { name: c.name, address: c.address, tax_id: c.tax_id } : null}
         lines={lines.map((l: { description: string; quantity: number; unit_price: number; amount: number }) => ({ description: l.description, quantity: Number(l.quantity), unit_price: Number(l.unit_price), amount: Number(l.amount) }))}
         currency={inv.currency} subtotal={Number(inv.subtotal)} vatRate={Number(inv.vat_rate)} vatAmount={Number(inv.vat_amount)}
-        total={Number(inv.total)} amountPaid={Number(inv.amount_paid)} notes={inv.notes}
+        total={Number(inv.total)} amountPaid={Number(inv.amount_paid)} notes={inv.notes} status={inv.status}
       />
 
       <div style={{ maxWidth: "48rem", margin: "0 auto" }} className="no-print">
